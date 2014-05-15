@@ -1,13 +1,31 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.socialbakers</groupId>
 	<artifactId>easy-config-maven-plugin</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>Easy Config Maven Plugin</name>
-	<description>Configuration support.
-supports: varargs, file config, system variables</description>
-
+	<description>Configuration support. Allows you to define configuration for your application in pom.xml and generate config files and java class. Configuration can be initialize by var args, file config or environment variables.</description>
+	<url>https://github.com/fiserro/easy-config</url>
+	<licenses>
+		<license>
+			<name>The Apache Software License, Version 2.0</name>
+			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
+	<scm>
+		<url>https://github.com/fiserro/easy-config.git</url>
+		<connection>scm:git:https://github.com/fiserro/easy-config.git</connection>
+	</scm>
+	<developers>
+		<developer>
+			<id>fiserro</id>
+			<name>Robert Fiser</name>
+			<email>robert.fiser@socialbakers.com</email>
+		</developer>
+	</developers>
 	<packaging>maven-plugin</packaging>
 
 	<dependencies>
