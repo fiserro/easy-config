@@ -1,5 +1,6 @@
 package ${package};
 
+import com.socialbakers.config.IParamDefinition;
 import com.socialbakers.config.AbstractConfiguration;
 
 /**
@@ -37,7 +38,7 @@ public <#if abstract>abstract </#if>class ${className} extends AbstractConfigura
 	
 </#list>
 
-	private enum Def implements ConfDef {
+	private enum Def implements IParamDefinition {
 	
 <#list params as param>
 	<#assign name = param.name>

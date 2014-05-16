@@ -33,7 +33,7 @@ public abstract class AbstractConfiguration {
 
 	private boolean suspendValidation;
 
-	protected AbstractConfiguration(IParamDefinition... confDefs) {
+	protected AbstractConfiguration(IParamDefinition[] confDefs) {
 		for (IParamDefinition confDef : confDefs) {
 			if (StringUtils.isNotBlank(confDef.getName())) {
 				byName.put(confDef.getName(), confDef);

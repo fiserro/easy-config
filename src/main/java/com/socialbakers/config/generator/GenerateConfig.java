@@ -97,7 +97,7 @@ public class GenerateConfig extends AbstractMojo {
 	}
 
 	private void checkSubsequence(String s1, String s2, String what) {
-		if (StringUtils.isBlank(s1) || StringUtils.isBlank(s1)) {
+		if (StringUtils.isBlank(s1) || StringUtils.isBlank(s2)) {
 			return;
 		}
 		if (s1.startsWith(s2)) {
