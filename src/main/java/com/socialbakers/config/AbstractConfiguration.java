@@ -4,7 +4,6 @@ import static org.apache.commons.beanutils.PropertyUtils.getPropertyDescriptors;
 
 import java.beans.PropertyDescriptor;
 import java.io.File;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -17,12 +16,18 @@ import org.apache.commons.lang3.StringUtils;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.input.SAXBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.socialbakers.config.exception.ConfigurationException;
 
 public abstract class AbstractConfiguration {
 
-	private List<String> configFiles = new ArrayList<String>();
+	public static File CONF_DIR = new File("conf/");
+
+	private final Logger logger = LoggerFactory.getLogger(getClass());
+
+	private List<File> configFiles = new ArrayList<File>();
 	private String[] args = new String[0];
 
 	private Map<IParamDefinition, PropertyDescriptor> properties;
@@ -50,9 +55,22 @@ public abstract class AbstractConfiguration {
 		}
 	}
 
-	public void addConfigFile(String configFile) {
-		configFiles.add(configFile);
-		reload();
+	public void addConfigFile(File file) {
+		if (!file.exists()) {
+			logger.debug("Config file '{}' does not exists", file.getAbsolutePath());
+			return;
+		}
+		logger.debug("Added file '{}'", file.getAbsolutePath());
+		configFiles.add(file);
+	}
+
+	public void addConfigFile(String filename) {
+		try {
+			File configFile = new File(CONF_DIR, filename);
+			addConfigFile(configFile);
+		} catch (Exception e) {
+			logger.error(e.getMessage(), e);
+		}
 	}
 
 	protected final void doValidate() {
@@ -194,7 +212,7 @@ public abstract class AbstractConfiguration {
 				value = arg;
 			}
 
-			setValue(confDef, value);
+			setValue(confDef, value, ConfigSource.ARG);
 		}
 	}
 
@@ -202,7 +220,7 @@ public abstract class AbstractConfiguration {
 		for (IParamDefinition confDef : byEnv.values()) {
 			if (System.getenv(confDef.getEnv()) != null) {
 				String value = System.getenv(confDef.getEnv());
-				setValue(confDef, value);
+				setValue(confDef, value, ConfigSource.ENV);
 			}
 		}
 	}
@@ -211,16 +229,13 @@ public abstract class AbstractConfiguration {
 
 		SAXBuilder builder = new SAXBuilder();
 
-		for (String filename : configFiles) {
+		for (File configFile : configFiles) {
 
 			try {
-				URL resource = getClass().getResource(filename);
-				File configFile = new File(resource.toURI());
-
 				if (!configFile.exists()) {
 					continue;
 				}
-
+				logger.debug("Reading configuration from file '{}':", configFile.getAbsolutePath());
 				Document document = builder.build(configFile);
 				Element rootNode = document.getRootElement();
 				List<?> list = rootNode.getChildren("property");
@@ -233,7 +248,7 @@ public abstract class AbstractConfiguration {
 					String value = node.getChildText("value");
 					IParamDefinition confDef = byName.get(name);
 
-					setValue(confDef, value);
+					setValue(confDef, value, ConfigSource.FILE);
 				}
 
 			} catch (Exception e) {
@@ -242,7 +257,7 @@ public abstract class AbstractConfiguration {
 		}
 	}
 
-	private void setValue(IParamDefinition confDef, String stringValue) {
+	private void setValue(IParamDefinition confDef, String stringValue, ConfigSource source) {
 
 		try {
 
@@ -260,6 +275,11 @@ public abstract class AbstractConfiguration {
 				throw new ConfigurationException("Unsupported type " + type.getName());
 			}
 
+			Object previous = descriptor.getReadMethod().invoke(this);
+			if (previous == null || !previous.equals(value)) {
+				logger.debug("Setting value '{}' of property '{}' from source {}", value, confDef.getName(), source);
+			}
+
 			suspendValidation = true;
 			descriptor.getWriteMethod().invoke(this, value);
 			suspendValidation = false;
@@ -267,5 +287,9 @@ public abstract class AbstractConfiguration {
 		} catch (Exception e) {
 			throw new ConfigurationException(e);
 		}
+	}
+
+	private enum ConfigSource {
+		ARG, ENV, FILE
 	}
 }

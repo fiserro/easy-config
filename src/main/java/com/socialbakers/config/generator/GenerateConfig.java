@@ -67,8 +67,6 @@ public class GenerateConfig extends AbstractMojo {
 		javaConfig.mkdirs();
 		javaConfig = new File(javaConfig, className + ".java");
 
-		outputDir = new File(outputDir, "conf");
-		outputDir.mkdirs();
 		xmlDefaultConfig = new File(outputDir, "configuration-default.xml");
 		xmlSiteConfig = new File(outputDir, "configuration-site.xml");
 

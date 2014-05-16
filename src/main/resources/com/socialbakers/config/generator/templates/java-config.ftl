@@ -21,8 +21,8 @@ public <#if abstract>abstract </#if>class ${className} extends AbstractConfigura
 	public ${className}(String... args) {
 		super(Def.values());
 		setArgs(args);
-		addConfigFile("/conf/configuration-default.xml");
-		addConfigFile("/conf/configuration-site.xml");
+		addConfigFile("configuration-default.xml");
+		addConfigFile("configuration-site.xml");
 		reload();
 	}
 	
