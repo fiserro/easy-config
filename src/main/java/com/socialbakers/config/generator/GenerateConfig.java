@@ -16,15 +16,22 @@ import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
+import org.eclipse.jdt.internal.core.Assert;
 
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateExceptionHandler;
 
+/**
+ * @author <a href="mailto:robert.fiser@socialbakers.com">Robert Fišer</a>
+ */
 @Mojo(name = "generate-config")
 public class GenerateConfig extends AbstractMojo {
 
 	private static final String PACKAGE_CLASS_REGEX = "(([a-z_]+\\.)*)([A-Z_][A-Za-z0-9_]*)";
+
+	public static final String HELP = "help";
+	public static final String DUMP = "dump";
 
 	@Parameter
 	private List<ParamDefinition> params;
@@ -33,7 +40,19 @@ public class GenerateConfig extends AbstractMojo {
 	private String outputDirName;
 
 	@Parameter
-	private String targetClass;
+	private String configClass;
+
+	@Parameter
+	private String configFileDefault = "configuration-default.xml";
+
+	@Parameter
+	private String configFileSite = "configuration-site.xml";
+
+	@Parameter
+	private String helpName = "";
+
+	@Parameter
+	private String helpDescription = "";
 
 	@Parameter(alias = "abstract")
 	private boolean abstr;
@@ -49,9 +68,9 @@ public class GenerateConfig extends AbstractMojo {
 
 		validate();
 
-		Matcher matcher = Pattern.compile(PACKAGE_CLASS_REGEX).matcher(targetClass);
+		Matcher matcher = Pattern.compile(PACKAGE_CLASS_REGEX).matcher(configClass);
 		boolean find = matcher.find();
-		assert find;
+		Assert.isTrue(find);
 
 		packagePath = matcher.group(1);
 		className = matcher.group(3);
@@ -67,8 +86,8 @@ public class GenerateConfig extends AbstractMojo {
 		javaConfig.mkdirs();
 		javaConfig = new File(javaConfig, className + ".java");
 
-		xmlDefaultConfig = new File(outputDir, "configuration-default.xml");
-		xmlSiteConfig = new File(outputDir, "configuration-site.xml");
+		xmlDefaultConfig = new File(outputDir, configFileDefault);
+		xmlSiteConfig = new File(outputDir, configFileSite);
 
 		if (!packagePath.isEmpty()) {
 			packagePath = packagePath.substring(0, packagePath.length() - 1);
@@ -125,6 +144,12 @@ public class GenerateConfig extends AbstractMojo {
 		if (set.contains(value)) {
 			throw new IllegalStateException("Multiple usage of " + what + ": " + value);
 		}
+		if (HELP.equals(value)) {
+			throw new IllegalStateException(HELP + " is reserved word and cannot be used for " + what);
+		}
+		if (DUMP.equals(value)) {
+			throw new IllegalStateException(DUMP + " is reserved word and cannot be used for " + what);
+		}
 		set.add(value);
 	}
 
@@ -171,6 +196,10 @@ public class GenerateConfig extends AbstractMojo {
 		input.put("package", packagePath);
 		input.put("className", className);
 		input.put("abstract", abstr);
+		input.put("configFileDefault", configFileDefault);
+		input.put("configFileSite", configFileSite);
+		input.put("helpName", helpName);
+		input.put("helpDescription", helpDescription);
 
 		writeFile(javaConfigTemplate, javaConfig, input);
 		writeFile(xmlConfigTemplate, xmlDefaultConfig, input);

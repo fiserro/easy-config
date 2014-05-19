@@ -19,10 +19,10 @@ public <#if abstract>abstract </#if>class ${className} extends AbstractConfigura
 </#list>
 
 	public ${className}(String... args) {
-		super(Def.values());
+		super(Def.values(), "${helpName}", "${helpDescription}");
+		addConfigFile("${configFileDefault}");
+		addConfigFile("${configFileSite}");
 		setArgs(args);
-		addConfigFile("configuration-default.xml");
-		addConfigFile("configuration-site.xml");
 		reload();
 	}
 	
@@ -42,24 +42,32 @@ public <#if abstract>abstract </#if>class ${className} extends AbstractConfigura
 	
 <#list params as param>
 	<#assign name = param.name>
+	<#if param.description??><#assign desc = '"' + param.description + '"'><#else><#assign desc = "null"></#if>
 	<#if param.env??><#assign env = '"' + param.env + '"'><#else><#assign env = "null"></#if>
 	<#if param.option??><#assign option = '"' + param.option + '"'><#else><#assign option = "null"></#if>
 	<#if param.order??><#assign order = param.order><#else><#assign order = "null"></#if>
 	<#if param.required><#assign required = "true"><#else><#assign required = "false"></#if>
-		${name}(${env}, ${option}, ${order}, ${required}),
+		${name}(${desc}, ${env}, ${option}, ${order}, ${required}),
 </#list>
 		;
 		
+		private final String desc;
 		private final String env;
 		private final String option;
 		private final Integer order;
 		private final boolean required;
 		
-		private Def(String env, String option, Integer order, boolean required) {
+		private Def(String desc, String env, String option, Integer order, boolean required) {
+			this.desc = desc;
 			this.env = env;
 			this.option = option;
 			this.order = order;
 			this.required = required;
+		}
+		
+		@Override
+		public String getDescription() {
+			return desc;
 		}
 		
 		@Override
