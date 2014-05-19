@@ -3,4 +3,5 @@
 .project
 .settings/
 pom.xml.versionsBackup
+release.sh
 
