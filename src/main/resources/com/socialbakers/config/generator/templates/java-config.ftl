@@ -2,11 +2,22 @@ package ${package};
 
 import com.socialbakers.config.IParamDefinition;
 import com.socialbakers.config.AbstractConfiguration;
+import com.socialbakers.config.generator.ParamValueSeparator;
 
 /**
  * !!! Generated file - Do not modify it !!!
  */
 public <#if abstract>abstract </#if>class ${className} extends AbstractConfiguration {
+
+	static {
+		if (CONF_DIR_ENV == null) {
+			CONF_DIR_ENV = "${confDirEnv}";
+		}
+		if (PARAM_VALUE_SEPARATOR == null) {
+			PARAM_VALUE_SEPARATOR = ParamValueSeparator.${paramValueSeparator.name()};
+		}
+		ALWAYS_RELOAD = ${alwaysReload};
+	}
 
 <#list params as param>
 	<#assign x0 = "">
@@ -20,20 +31,25 @@ public <#if abstract>abstract </#if>class ${className} extends AbstractConfigura
 
 	public ${className}(String... args) {
 		super(Def.values(), "${helpName}", "${helpDescription}");
-		addConfigFile("${configFileDefault}");
-		addConfigFile("${configFileSite}");
+		addResource("${configFileDefault}");
+		addResource("${configFileSite}");
 		setArgs(args);
 		reload();
 	}
 	
 <#list params as param>
 	public ${param.javaType} get${param.name?cap_first}() {
+		if (ALWAYS_RELOAD) {
+			reload();
+		}		
 		return ${param.name};
 	}
 	
 	public void set${param.name?cap_first}(${param.javaType} ${param.name}) {
 		this.${param.name} = ${param.name};
-		doValidate();
+		if (!suspendValidation) {
+			validate();
+		}
 	}
 	
 </#list>

@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 
 import com.socialbakers.config.exception.ConfigurationException;
 import com.socialbakers.config.generator.GenerateConfig;
+import com.socialbakers.config.generator.ParamValueSeparator;
 
 import freemarker.template.Configuration;
 import freemarker.template.Template;
@@ -38,6 +39,11 @@ import freemarker.template.TemplateExceptionHandler;
  */
 public abstract class AbstractConfiguration {
 
+	public static ParamValueSeparator PARAM_VALUE_SEPARATOR;
+	public static boolean ALWAYS_RELOAD;
+	public static String CONF_DIR_ENV;
+	public static String DEFAULT_CONF_DIR_ENV = "CONF_DIR";
+
 	private static final String NAME_PREFIX = "--";
 	private static final String OPTION_PREFIX = "-";
 	private static final String HELP_NAME = NAME_PREFIX + GenerateConfig.HELP;
@@ -47,8 +53,7 @@ public abstract class AbstractConfiguration {
 
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 
-	private File confDir = new File("conf/");
-	private List<File> configFiles = new ArrayList<File>();
+	private List<Object> resources = new ArrayList<Object>();
 	private String[] args = new String[0];
 	private String helpName = "app-name";
 	private String helpDescription = "";
@@ -60,7 +65,7 @@ public abstract class AbstractConfiguration {
 	private Map<String, IParamDefinition> byOption = new HashMap<String, IParamDefinition>();
 	private Map<Integer, IParamDefinition> byOrder = new HashMap<Integer, IParamDefinition>();
 
-	private boolean suspendValidation;
+	protected boolean suspendValidation;
 
 	private Comparator<IParamDefinition> paramOrderComparator = new Comparator<IParamDefinition>() {
 		@Override
@@ -105,35 +110,28 @@ public abstract class AbstractConfiguration {
 		}
 	}
 
-	public void addConfigFile(File file) {
-		configFiles.add(file);
+	public void addResource(File file) {
+		resources.add(file);
 	}
 
-	public void addConfigFile(String filename) {
-		try {
-			File configFile = new File(confDir, filename);
-			addConfigFile(configFile);
-		} catch (Exception e) {
-			logger.error(e.getMessage(), e);
-		}
-	}
-
-	protected final void doValidate() {
-		if (!suspendValidation) {
-			validate();
-		}
+	public void addResource(String filename) {
+		resources.add(filename);
 	}
 
 	protected void reload() {
+		boolean alwaysReload = ALWAYS_RELOAD;
+		ALWAYS_RELOAD = false;
 		try {
 			reloadFromFiles();
 			reloadFromEnvVars();
 			reloadFromArgs();
-			doValidate();
+			validate();
 		} catch (ConfigurationException e) {
 			throw e;
 		} catch (Exception e) {
-			throw new ConfigurationException(e);
+			throw new ConfigurationException(e + "\n" + helpMsg());
+		} finally {
+			ALWAYS_RELOAD = alwaysReload;
 		}
 	}
 
@@ -145,11 +143,7 @@ public abstract class AbstractConfiguration {
 			Assert.isNotNull(arg);
 			if (arg.startsWith(HELP_NAME) || arg.startsWith(HELP_OPTION)) {
 				String msg;
-				try {
-					msg = helpMsg();
-				} catch (Exception e) {
-					msg = e.getMessage();
-				}
+				msg = helpMsg();
 				throw new ConfigurationException(msg);
 			}
 			if (arg.startsWith(DUMP_NAME) || arg.startsWith(DUMP_OPTION)) {
@@ -167,6 +161,11 @@ public abstract class AbstractConfiguration {
 	}
 
 	protected void validate() {
+
+		if (suspendValidation) {
+			return;
+		}
+
 		StringBuilder msg = new StringBuilder();
 
 		boolean valid;
@@ -221,7 +220,7 @@ public abstract class AbstractConfiguration {
 
 	private String[] extractValue(String arg, String prefix1, Collection<String> prefixes2) {
 		String[] result = new String[2];
-		arg = arg.replaceFirst(prefix1, "");
+		arg = arg.replaceFirst(prefix1, "").replaceFirst(PARAM_VALUE_SEPARATOR.getSeparator(), "");
 		for (String prefix2 : prefixes2) {
 			if (arg.startsWith(prefix2)) {
 				result[0] = prefix2;
@@ -229,7 +228,7 @@ public abstract class AbstractConfiguration {
 			}
 		}
 		if (StringUtils.isBlank(result[0]) || StringUtils.isBlank(result[1])) {
-			throw new ConfigurationException("Invalid argument " + arg);
+			throw new IllegalArgumentException("Invalid argument " + arg);
 		}
 		return result;
 	}
@@ -247,6 +246,17 @@ public abstract class AbstractConfiguration {
 		}
 	}
 
+	private File getConfDir() {
+		String confDirName = System.getenv(CONF_DIR_ENV);
+		if (confDirName == null) {
+			confDirName = System.getenv(DEFAULT_CONF_DIR_ENV);
+		}
+		if (confDirName == null) {
+			confDirName = "conf/";
+		}
+		return new File(confDirName);
+	}
+
 	private Map<IParamDefinition, PropertyDescriptor> getProperties() {
 		if (properties != null) {
 			return properties;
@@ -260,47 +270,79 @@ public abstract class AbstractConfiguration {
 		return properties;
 	}
 
-	private String helpMsg() throws Exception {
+	private List<String> getResourcesAsStrings() {
+		List<String> result = new ArrayList<String>();
+		for (Object resource : resources) {
+			result.add(resource.toString());
+		}
+		return result;
+	}
 
-		Configuration cfg = new Configuration();
-		cfg.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
-		cfg.setClassForTemplateLoading(AbstractConfiguration.class, "templates");
+	private String helpMsg() {
 
-		Template helpTemplate = cfg.getTemplate("help.ftl");
-
-		Map<String, Object> input = new HashMap<String, Object>();
-		input.put("name", helpName);
-		input.put("description", helpDescription);
-		input.put("usage", usage(confDefs));
-		input.put("params", confDefs);
-		input.put("helpName", HELP_NAME);
-		input.put("helpOption", HELP_OPTION);
-		input.put("dumpName", DUMP_NAME);
-		input.put("dumpOption", DUMP_OPTION);
-		input.put("namePrefix", NAME_PREFIX);
-		input.put("optionPrefix", OPTION_PREFIX);
-		input.put("configFiles", configFiles);
-
-		StringWriter writer = new StringWriter();
 		try {
-			helpTemplate.process(input, writer);
-			return writer.toString();
-		} finally {
-			writer.close();
+			Configuration cfg = new Configuration();
+			cfg.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
+			cfg.setClassForTemplateLoading(AbstractConfiguration.class, "templates");
+
+			Template helpTemplate = cfg.getTemplate("help.ftl");
+
+			Map<String, Object> input = new HashMap<String, Object>();
+			input.put("name", helpName);
+			input.put("description", helpDescription);
+			input.put("usage", usage(confDefs));
+			input.put("params", confDefs);
+			input.put("helpName", HELP_NAME);
+			input.put("helpOption", HELP_OPTION);
+			input.put("dumpName", DUMP_NAME);
+			input.put("dumpOption", DUMP_OPTION);
+			input.put("namePrefix", NAME_PREFIX);
+			input.put("optionPrefix", OPTION_PREFIX);
+			input.put("resources", getResourcesAsStrings());
+
+			StringWriter writer = new StringWriter();
+			try {
+				helpTemplate.process(input, writer);
+				return writer.toString();
+			} finally {
+				writer.close();
+			}
+		} catch (Exception e) {
+			return e.getMessage();
 		}
 	}
 
 	private void reloadFromArgs() {
+
+		int iPos = 0;
+
 		for (int i = 0; i < args.length; i++) {
+
 			String arg = args[i];
 			String value;
 			IParamDefinition confDef;
 			String source = arg;
+
 			Set<String> skipArgs = new HashSet<String>(Arrays.asList(HELP_NAME, HELP_OPTION, DUMP_NAME, DUMP_OPTION));
 			if (skipArgs.contains(arg)) {
 				continue;
 			}
-			if (arg.startsWith(NAME_PREFIX)) {
+
+			if (PARAM_VALUE_SEPARATOR == ParamValueSeparator.SPACE_SEPARATOR
+					&& (arg.startsWith(NAME_PREFIX) || arg.startsWith(OPTION_PREFIX))) {
+				if (arg.startsWith(NAME_PREFIX)) {
+					confDef = byName.get(arg.replaceFirst(NAME_PREFIX, ""));
+				} else {
+					confDef = byOption.get(arg.replaceFirst(OPTION_PREFIX, ""));
+				}
+				if (confDef == null) {
+					throw new IllegalArgumentException("Invalid argument: " + arg);
+				}
+				if (++i >= args.length) {
+					throw new IllegalArgumentException("Missing value for argument: " + arg);
+				}
+				value = args[i];
+			} else if (arg.startsWith(NAME_PREFIX)) {
 				String[] e = extractValue(arg, NAME_PREFIX, byName.keySet());
 				confDef = byName.get(e[0]);
 				value = e[1];
@@ -309,7 +351,7 @@ public abstract class AbstractConfiguration {
 				confDef = byOption.get(e[0]);
 				value = e[1];
 			} else {
-				confDef = byOrder.get(i);
+				confDef = byOrder.get(iPos++);
 				value = arg;
 				source = "arg[" + i + "]=" + arg;
 			}
@@ -331,27 +373,42 @@ public abstract class AbstractConfiguration {
 
 		SAXBuilder builder = new SAXBuilder();
 
-		for (File configFile : configFiles) {
+		for (Object resource : resources) {
 
 			try {
-				if (!configFile.exists()) {
-					logger.info("Config file '{}' does not exists", configFile.getAbsolutePath());
-					continue;
+				Document document = null;
+
+				File configFile = null;
+				if (resource instanceof String) {
+					configFile = new File(getConfDir(), (String) resource);
+				} else if (resource instanceof File) {
+					configFile = (File) resource;
 				}
-				logger.info("Reading configuration from file '{}':", configFile.getAbsolutePath());
-				Document document = builder.build(configFile);
-				Element rootNode = document.getRootElement();
-				List<?> list = rootNode.getChildren("property");
+				if (configFile != null) {
+					if (!configFile.exists()) {
+						logger.info("Config file '{}' does not exists", configFile.getAbsolutePath());
+						continue;
+					}
+					logger.info("Reading configuration from file '{}':", configFile.getAbsolutePath());
+					document = builder.build(configFile);
+				}
 
-				for (int i = 0; i < list.size(); i++) {
+				// TODO inpustream, url, ...
 
-					Element node = (Element) list.get(i);
+				if (document != null) {
+					Element rootNode = document.getRootElement();
+					List<?> list = rootNode.getChildren("property");
 
-					String name = node.getChildText("name");
-					String value = node.getChildText("value");
-					IParamDefinition confDef = byName.get(name);
+					for (int i = 0; i < list.size(); i++) {
 
-					setValue(confDef, value, ConfigSource.FILE, configFile.getName());
+						Element node = (Element) list.get(i);
+
+						String name = node.getChildText("name");
+						String value = node.getChildText("value");
+						IParamDefinition confDef = byName.get(name);
+
+						setValue(confDef, value, ConfigSource.FILE, configFile.getName());
+					}
 				}
 
 			} catch (Exception e) {

@@ -57,6 +57,15 @@ public class GenerateConfig extends AbstractMojo {
 	@Parameter(alias = "abstract")
 	private boolean abstr;
 
+	@Parameter
+	private ParamValueSeparator paramValueSeparator = ParamValueSeparator.NO_SEPARATOR;
+
+	@Parameter
+	private boolean alwaysReload;
+
+	@Parameter
+	private String confDirEnv = "conf/";
+
 	private String className;
 	private String packagePath;
 	private File javaConfig;
@@ -200,6 +209,9 @@ public class GenerateConfig extends AbstractMojo {
 		input.put("configFileSite", configFileSite);
 		input.put("helpName", helpName);
 		input.put("helpDescription", helpDescription);
+		input.put("paramValueSeparator", paramValueSeparator);
+		input.put("alwaysReload", Boolean.valueOf(alwaysReload).toString());
+		input.put("confDirEnv", confDirEnv);
 
 		writeFile(javaConfigTemplate, javaConfig, input);
 		writeFile(xmlConfigTemplate, xmlDefaultConfig, input);

@@ -21,7 +21,7 @@ OPTIONS
 		<#if param.getDescription()??>${param.getDescription()}</#if>
 </#list>
 
-CONFIG FILES
-<#list configFiles as file>
-	'${file.getAbsolutePath()}'<#if !file.exists()> - file not found</#if>
+RESOURCES
+<#list resources as resource>
+	${resource}
 </#list>
