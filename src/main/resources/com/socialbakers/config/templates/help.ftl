@@ -3,8 +3,8 @@ NAME
 	
 USAGE
 	${name}${usage}
-	${name}${helpOption}
-	${name}${dumpOption}
+	${name} ${helpOption}
+	${name} ${dumpOption}
 	
 DESCRIPTION
 	${description}

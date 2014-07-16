@@ -81,10 +81,7 @@ public abstract class AbstractConfiguration {
 		}
 	};
 
-	protected AbstractConfiguration(IParamDefinition[] confDefs, String helpName, String helpDescription) {
-
-		this.confDefs = new ArrayList<IParamDefinition>(Arrays.asList(confDefs));
-		Collections.sort(this.confDefs, paramOrderComparator);
+	protected AbstractConfiguration(String helpName, String helpDescription) {
 
 		if (StringUtils.isNotBlank(helpName)) {
 			this.helpName = helpName;
@@ -94,7 +91,24 @@ public abstract class AbstractConfiguration {
 			this.helpDescription = helpDescription;
 		}
 
-		for (IParamDefinition confDef : confDefs) {
+		this.confDefs = new ArrayList<IParamDefinition>();
+
+		Envio.loadConfiguration();
+	}
+
+	public void addResource(File file) {
+		resources.add(file);
+	}
+
+	public void addResource(String filename) {
+		resources.add(filename);
+	}
+
+	protected void addDef(IParamDefinition... def) {
+		confDefs.addAll(Arrays.asList(def));
+		Collections.sort(this.confDefs, paramOrderComparator);
+
+		for (IParamDefinition confDef : this.confDefs) {
 			if (StringUtils.isNotBlank(confDef.getName())) {
 				byName.put(confDef.getName(), confDef);
 			}
@@ -108,14 +122,6 @@ public abstract class AbstractConfiguration {
 				byOrder.put(confDef.getOrder(), confDef);
 			}
 		}
-	}
-
-	public void addResource(File file) {
-		resources.add(file);
-	}
-
-	public void addResource(String filename) {
-		resources.add(filename);
 	}
 
 	protected void reload() {
@@ -173,6 +179,9 @@ public abstract class AbstractConfiguration {
 		try {
 			List<IParamDefinition> notSetRequiredParams = new ArrayList<IParamDefinition>();
 			for (IParamDefinition confDef : byName.values()) {
+				if (!confDef.isRequired()) {
+					continue;
+				}
 				PropertyDescriptor descriptor = getProperties().get(confDef);
 				Object value = descriptor.getReadMethod().invoke(this);
 				if (value == null) {

@@ -9,14 +9,16 @@ public class ParamDefinition implements IParamDefinition {
 	private String env;
 	private Integer order;
 	private String description;
-	private String javaType;
+	private String javaType = "String";
 	private String defaultValue;
 	private boolean required;
 
+	@Override
 	public String getDefaultValue() {
 		return defaultValue;
 	}
 
+	@Override
 	public String getDescription() {
 		return description;
 	}
@@ -26,6 +28,7 @@ public class ParamDefinition implements IParamDefinition {
 		return env;
 	}
 
+	@Override
 	public String getJavaType() {
 		return javaType;
 	}
