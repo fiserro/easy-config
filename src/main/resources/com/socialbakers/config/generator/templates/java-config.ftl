@@ -58,7 +58,7 @@ public <#if abstract>abstract </#if>class ${className} extends ${superClass} {
 	
 </#list>
 
-	protected enum Def implements IParamDefinition {
+	public enum Def implements IParamDefinition {
 	
 <#list params as param>
 	<#assign name = param.getName()>

@@ -10,9 +10,16 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.socialbakers</groupId>
   <artifactId>easy-config-maven-plugin</artifactId>
-  <version>0.5-SNAPSHOT</version>
+  <version>0.4.2</version>
   <name>Easy Config Maven Plugin</name>
-  <description>Maven plugin for small application config support. Allows you to define configuration for your application at one place and generate config files and java class. Configuration can be instantiate by var args, file config or environment variables or combination of all.</description>
+  <description>Maven plugin for small application config support. Allows you to define configuration for your application at one place and generate config files and java class. Configuration can be instantiate by var args, file config or environment variables or combination of all.
+
+TODO:
+- boolean opts
+-- is/get
+-- option without value true
+- make def enum public
+- static instance to access from everywhere without pass an instance</description>
   <url>https://github.com/fiserro/easy-config</url>
   <licenses>
     <license>
@@ -119,8 +126,8 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.0</version>
         <configuration>
-          <source>1.7</source>
-          <target>1.7</target>
+          <source>1.6</source>
+          <target>1.6</target>
         </configuration>
       </plugin>
     </plugins>
