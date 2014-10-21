@@ -39,7 +39,7 @@ public class GenerateConfig extends AbstractMojo {
 
 	@Parameter
 	private List<ParamDefinition> params;
-	private Map<String, IParamDefinition> iParams = new LinkedHashMap<String, IParamDefinition>();
+	private Map<String, IParamDefinition> iParams;
 
 	@Parameter(alias = "outputDir")
 	private String outputDirName;
@@ -94,7 +94,7 @@ public class GenerateConfig extends AbstractMojo {
 	@Override
 	public void execute() throws MojoExecutionException {
 		try {
-
+			iParams = new LinkedHashMap<String, IParamDefinition>();
 			for (IParamDefinition param : params) {
 				iParams.put(param.getName(), param);
 			}

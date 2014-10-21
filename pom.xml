@@ -1,5 +1,4 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
   <parent>
     <groupId>org.sonatype.oss</groupId>
@@ -10,7 +9,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.socialbakers</groupId>
   <artifactId>easy-config-maven-plugin</artifactId>
-  <version>0.4.2</version>
+  <version>0.4.3-SNAPSHOT</version>
   <name>Easy Config Maven Plugin</name>
   <description>Maven plugin for small application config support. Allows you to define configuration for your application at one place and generate config files and java class. Configuration can be instantiate by var args, file config or environment variables or combination of all.
 
@@ -19,7 +18,9 @@ TODO:
 -- is/get
 -- option without value true
 - make def enum public
-- static instance to access from everywhere without pass an instance</description>
+- static instance to access from everywhere without pass an instance
+-static enum Def
+-more executions with different configuration has conflict in options and names</description>
   <url>https://github.com/fiserro/easy-config</url>
   <licenses>
     <license>
@@ -133,8 +134,54 @@ TODO:
     </plugins>
   </build>
 
-  <!-- <distributionManagement> <snapshotRepository> <id>oss</id> <name>snapshot</name> 
-    <url>https://oss.sonatype.org/content/repositories/snapshots</url> </snapshotRepository> 
-    <repository> <id>oss</id> <name>release</name> <url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url> 
-    </repository> </distributionManagement> -->
+
+  <profiles>
+    <profile>
+
+      <id>nexus-deploy</id>
+
+      <distributionManagement>
+        <repository>
+          <id>nexus</id>
+          <name>Releases</name>
+          <url>http://mvn.ccl/nexus/content/repositories/releases</url>
+        </repository>
+
+        <snapshotRepository>
+          <id>nexus</id>
+          <name>Snapshots</name>
+          <url>http://mvn.ccl/nexus/content/repositories/snapshots</url>
+        </snapshotRepository>
+      </distributionManagement>
+
+      <repositories>
+        <repository>
+          <id>nexus</id>
+          <name>Public repository</name>
+          <url>http://mvn.ccl/nexus/content/groups/public/</url>
+          <releases>
+            <enabled>true</enabled>
+          </releases>
+          <snapshots>
+            <enabled>true</enabled>
+          </snapshots>
+        </repository>
+      </repositories>
+
+      <pluginRepositories>
+        <pluginRepository>
+          <id>nexus</id>
+          <name>nexus</name>
+          <url>http://mvn.ccl/nexus/content/groups/public</url>
+          <releases>
+            <enabled>true</enabled>
+          </releases>
+          <snapshots>
+            <enabled>true</enabled>
+          </snapshots>
+        </pluginRepository>
+      </pluginRepositories>
+    </profile>
+  </profiles>
+
 </project>
