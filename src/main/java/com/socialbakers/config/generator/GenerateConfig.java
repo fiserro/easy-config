@@ -39,7 +39,8 @@ public class GenerateConfig extends AbstractMojo {
 
 	@Parameter
 	private List<ParamDefinition> params;
-	private Map<String, IParamDefinition> iParams;
+
+	private Map<String, IParamDefinition> iParams = new LinkedHashMap<String, IParamDefinition>();
 
 	@Parameter(alias = "outputDir")
 	private String outputDirName;
@@ -82,20 +83,23 @@ public class GenerateConfig extends AbstractMojo {
 
 	@Parameter
 	private boolean genXml = true;
-
 	private String className;
 	private String packagePath;
 	private File javaConfig;
 	private File envConfig;
 	private File xmlDefaultConfig;
 	private File xmlSiteConfig;
+
 	private File outputDir;
 
 	@Override
 	public void execute() throws MojoExecutionException {
+
+		getLog().info(this.toString());
+
 		try {
-			iParams = new LinkedHashMap<String, IParamDefinition>();
 			for (IParamDefinition param : params) {
+				getLog().info("Adding param: " + param.getName());
 				iParams.put(param.getName(), param);
 			}
 			validate();
@@ -165,6 +169,7 @@ public class GenerateConfig extends AbstractMojo {
 				Template envConfigTemplate = cfg.getTemplate("env-config.ftl");
 				writeFile(envConfigTemplate, envConfig, input);
 			}
+
 		} catch (Exception e) {
 			throw new MojoExecutionException(e.getMessage(), e);
 		}
@@ -249,10 +254,10 @@ public class GenerateConfig extends AbstractMojo {
 			if (!Arrays.asList(class1.getInterfaces()).contains(IParamDefinition.class)) {
 				continue;
 			}
-			getLog().info("Loading params from superClass:" + class1);
 			for (Object object : class1.getEnumConstants()) {
 				IParamDefinition param = (IParamDefinition) object;
 				if (!iParams.containsKey(param.getName())) {
+					getLog().info("Addind param from superClass:" + class1 + "." + param.getName());
 					iParams.put(param.getName(), param);
 				}
 			}
