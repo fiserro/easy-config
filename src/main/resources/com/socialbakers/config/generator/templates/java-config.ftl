@@ -11,8 +11,8 @@ public <#if abstract>abstract </#if>class ${className} extends ${superClass} {
 		if (CONF_DIR_ENV == null) {
 			CONF_DIR_ENV = "${confDirEnv}";
 		}
-		if (PARAM_VALUE_SEPARATOR == null) {
-			PARAM_VALUE_SEPARATOR = ParamValueSeparator.${paramValueSeparator.name()};
+		if (${superClass}.PARAM_VALUE_SEPARATOR == null) {
+			${superClass}.PARAM_VALUE_SEPARATOR = ParamValueSeparator.${paramValueSeparator.name()};
 		}
 		ALWAYS_RELOAD = ${alwaysReload};
 	}
