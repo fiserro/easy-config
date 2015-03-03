@@ -96,6 +96,9 @@ public class GenerateConfig extends AbstractMojo {
 
 	private static final String START_WITH_NUMBER = "[0-9].*";
 
+	private static final Set<String> RESERVED_WORDS = new HashSet<String>(Arrays.asList(HELP, DUMP, "desc", "env",
+			"option", "order", "required", "defaultValue", "javaType", "paramName"));
+
 	@Override
 	public void execute() throws MojoExecutionException {
 
@@ -223,11 +226,8 @@ public class GenerateConfig extends AbstractMojo {
 		if (set.contains(value)) {
 			throw new IllegalStateException("Multiple usage of " + what + ": " + value);
 		}
-		if (HELP.equals(value)) {
-			throw new IllegalStateException(HELP + " is reserved word and cannot be used for " + what);
-		}
-		if (DUMP.equals(value)) {
-			throw new IllegalStateException(DUMP + " is reserved word and cannot be used for " + what);
+		if (RESERVED_WORDS.contains(value)) {
+			throw new IllegalStateException(value + " is reserved word and cannot be used for " + what);
 		}
 		set.add(value);
 	}

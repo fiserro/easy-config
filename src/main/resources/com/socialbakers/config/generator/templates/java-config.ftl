@@ -78,10 +78,10 @@ public <#if abstract>abstract </#if>class ${className} extends ${superClass} {
 		private final boolean required;
 		private final String defaultValue;
 		private final String javaType;
-		private final String name;
+		private final String paramName;
 		
 		private Def(String desc, String env, String option, Integer order, boolean required, String defaultValue, 
-				String javaType, String name) {
+				String javaType, String paramName) {
 			this.desc = desc;
 			this.env = env;
 			this.option = option;
@@ -89,7 +89,7 @@ public <#if abstract>abstract </#if>class ${className} extends ${superClass} {
 			this.required = required;
 			this.defaultValue = defaultValue;
 			this.javaType = javaType;
-			this.name = name;
+			this.paramName = paramName;
 		}
 		
 		@Override
@@ -109,7 +109,7 @@ public <#if abstract>abstract </#if>class ${className} extends ${superClass} {
 
 		@Override
 		public String getName() {
-			return name;
+			return paramName;
 		}
 
 		@Override
