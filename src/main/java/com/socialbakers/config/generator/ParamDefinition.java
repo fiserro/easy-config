@@ -1,5 +1,6 @@
 package com.socialbakers.config.generator;
 
+import com.socialbakers.config.AbstractConfiguration;
 import com.socialbakers.config.IParamDefinition;
 
 public class ParamDefinition implements IParamDefinition {
@@ -26,6 +27,11 @@ public class ParamDefinition implements IParamDefinition {
 	@Override
 	public String getEnv() {
 		return env;
+	}
+
+	@Override
+	public String getJavaName() {
+		return AbstractConfiguration.replaceDots(name);
 	}
 
 	@Override

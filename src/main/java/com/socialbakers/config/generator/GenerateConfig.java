@@ -20,6 +20,8 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.eclipse.jdt.internal.core.Assert;
 
+import com.socialbakers.config.AbstractConfiguration;
+import com.socialbakers.config.AbstractConfiguration.ParamValueSeparator;
 import com.socialbakers.config.IParamDefinition;
 
 import freemarker.template.Configuration;
@@ -67,7 +69,7 @@ public class GenerateConfig extends AbstractMojo {
 	private boolean abstr;
 
 	@Parameter
-	private ParamValueSeparator paramValueSeparator = ParamValueSeparator.NO_SEPARATOR;
+	private ParamValueSeparator paramValueSeparator = ParamValueSeparator.SPACE_SEPARATOR;
 
 	@Parameter
 	private boolean alwaysReload;
@@ -91,6 +93,8 @@ public class GenerateConfig extends AbstractMojo {
 	private File xmlSiteConfig;
 
 	private File outputDir;
+
+	private static final String START_WITH_NUMBER = "[0-9].*";
 
 	@Override
 	public void execute() throws MojoExecutionException {
@@ -175,32 +179,39 @@ public class GenerateConfig extends AbstractMojo {
 		}
 	}
 
-	private void checkNamesAreSet() {
-		for (IParamDefinition p : iParams.values()) {
-			if (StringUtils.isBlank(p.getName())) {
-				throw new IllegalStateException("Some parameter hasn't set name.");
-			}
-		}
-	}
-
-	private void checkSubsequence(String s1, String s2, String what) {
+	private void checkConflict(String s1, String s2, String what) {
 		if (StringUtils.isBlank(s1) || StringUtils.isBlank(s2)) {
 			return;
 		}
-		if (s1.startsWith(s2)) {
-			throw new IllegalStateException(what + " '" + s1 + "' starts with " + what + " '" + s2 + "'.");
+		if (AbstractConfiguration.replaceDots(s1).equals(AbstractConfiguration.replaceDots(s2))) {
+			throw new IllegalStateException(what + " '" + s1 + "' is in conflict with " + what + " '" + s2 + "'.");
 		}
 	}
 
-	private void checkSubsequences() {
+	private void checkConflicts() {
 		for (IParamDefinition p1 : iParams.values()) {
 			for (IParamDefinition p2 : iParams.values()) {
 				if (p1 == p2) {
 					continue;
 				}
-				checkSubsequence(p1.getName(), p2.getName(), "name");
-				checkSubsequence(p1.getOption(), p2.getOption(), "option");
-				checkSubsequence(p1.getEnv(), p2.getEnv(), "env var");
+				checkConflict(p1.getName(), p2.getName(), "name");
+				checkConflict(p1.getOption(), p2.getOption(), "option");
+				checkConflict(p1.getEnv(), p2.getEnv(), "env var");
+			}
+		}
+	}
+
+	private void checkNamesAreSet() {
+		for (IParamDefinition p : iParams.values()) {
+			if (StringUtils.isBlank(p.getName())) {
+				throw new IllegalStateException("Some parameter hasn't set name.");
+			} else if (!p.getName().matches(AbstractConfiguration.NAME_PATTERN)) {
+				throw new IllegalStateException("Illegal parameter name: " + p.getName());
+			} else if (p.getName().matches(START_WITH_NUMBER)) {
+				throw new IllegalStateException("Illegal parameter name: " + p.getName());
+			}
+			if (StringUtils.isNotBlank(p.getOption()) && !p.getOption().matches(AbstractConfiguration.OPTION_PATTERN)) {
+				throw new IllegalStateException("Illegal parameter(" + p.getName() + ") option: " + p.getOption());
 			}
 		}
 	}
@@ -268,7 +279,7 @@ public class GenerateConfig extends AbstractMojo {
 	private void validate() {
 		checkNamesAreSet();
 		checkUniqueIdentifiers();
-		checkSubsequences();
+		checkConflicts();
 	}
 
 	private void writeFile(Template template, File targetFile, Map<String, Object> input) throws Exception {

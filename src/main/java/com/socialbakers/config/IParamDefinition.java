@@ -8,6 +8,8 @@ public interface IParamDefinition {
 
 	String getEnv();
 
+	String getJavaName();
+
 	String getJavaType();
 
 	String getName();

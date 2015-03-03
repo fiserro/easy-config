@@ -1,7 +1,6 @@
 package ${package};
 
 import com.socialbakers.config.IParamDefinition;
-import com.socialbakers.config.generator.ParamValueSeparator;
 
 /**
  * !!! Generated file - Do not modify it !!!
@@ -25,7 +24,7 @@ public <#if abstract>abstract </#if>class ${className} extends ${superClass} {
 		<#assign x0 = '"'>
 		<#assign x1 = '"'>
 	</#if>
-	private ${param.javaType} ${param.getName()}<#if param.defaultValue??> = ${x0}${param.defaultValue}${x1}</#if>;
+	private ${param.javaType} ${param.getJavaName()}<#if param.defaultValue??> = ${x0}${param.defaultValue}${x1}</#if>;
 </#list>
 	
 	protected ${className}(String helpName, String helpDescription) {
@@ -42,15 +41,15 @@ public <#if abstract>abstract </#if>class ${className} extends ${superClass} {
 	}
 	
 <#list params as param>
-	public ${param.javaType} get${param.getName()?cap_first}() {
+	public ${param.javaType} get${param.getJavaName()?cap_first}() {
 		if (ALWAYS_RELOAD) {
 			reload();
 		}		
-		return ${param.getName()};
+		return ${param.getJavaName()};
 	}
 	
-	public void set${param.getName()?cap_first}(${param.javaType} ${param.getName()}) {
-		this.${param.getName()} = ${param.getName()};
+	public void set${param.getJavaName()?cap_first}(${param.javaType} ${param.getJavaName()}) {
+		this.${param.getJavaName()} = ${param.getJavaName()};
 		if (!suspendValidation) {
 			validate();
 		}
@@ -61,14 +60,14 @@ public <#if abstract>abstract </#if>class ${className} extends ${superClass} {
 	public enum Def implements IParamDefinition {
 	
 <#list params as param>
-	<#assign name = param.getName()>
+	<#assign name = param.getJavaName()>
 	<#if param.description??><#assign desc = '"' + param.description + '"'><#else><#assign desc = "null"></#if>
 	<#if param.env??><#assign env = '"' + param.env + '"'><#else><#assign env = "null"></#if>
 	<#if param.option??><#assign option = '"' + param.option + '"'><#else><#assign option = "null"></#if>
 	<#if param.order??><#assign order = param.order><#else><#assign order = "null"></#if>
 	<#if param.required><#assign required = "true"><#else><#assign required = "false"></#if>
 	<#if param.defaultValue??><#assign defaultValue = '"'+param.defaultValue+'"'><#else><#assign defaultValue = "null"></#if>
-		${name}(${desc}, ${env}, ${option}, ${order}, ${required}, ${defaultValue}, "${param.javaType}"),
+		${name}(${desc}, ${env}, ${option}, ${order}, ${required}, ${defaultValue}, "${param.javaType}", "${param.getName()}"),
 </#list>
 		;
 		
@@ -79,9 +78,10 @@ public <#if abstract>abstract </#if>class ${className} extends ${superClass} {
 		private final boolean required;
 		private final String defaultValue;
 		private final String javaType;
+		private final String name;
 		
 		private Def(String desc, String env, String option, Integer order, boolean required, String defaultValue, 
-				String javaType) {
+				String javaType, String name) {
 			this.desc = desc;
 			this.env = env;
 			this.option = option;
@@ -89,6 +89,7 @@ public <#if abstract>abstract </#if>class ${className} extends ${superClass} {
 			this.required = required;
 			this.defaultValue = defaultValue;
 			this.javaType = javaType;
+			this.name = name;
 		}
 		
 		@Override
@@ -102,8 +103,13 @@ public <#if abstract>abstract </#if>class ${className} extends ${superClass} {
 		}
 
 		@Override
-		public String getName() {
+		public String getJavaName() {
 			return name();
+		}
+
+		@Override
+		public String getName() {
+			return name;
 		}
 
 		@Override
