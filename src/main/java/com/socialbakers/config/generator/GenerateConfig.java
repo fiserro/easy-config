@@ -21,8 +21,8 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.eclipse.jdt.internal.core.Assert;
 
 import com.socialbakers.config.AbstractConfiguration;
-import com.socialbakers.config.AbstractConfiguration.ParamValueSeparator;
 import com.socialbakers.config.IParamDefinition;
+import com.socialbakers.config.ParamValueSeparator;
 
 import freemarker.template.Configuration;
 import freemarker.template.Template;

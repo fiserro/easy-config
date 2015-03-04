@@ -16,8 +16,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jdt.internal.core.Assert;
@@ -27,7 +25,6 @@ import org.jdom.input.SAXBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.socialbakers.config.AbstractConfiguration.ParamValueSeparator.ValuePlace;
 import com.socialbakers.config.exception.ConfigurationException;
 import com.socialbakers.config.exception.DumpException;
 import com.socialbakers.config.exception.HelpException;
@@ -48,8 +45,8 @@ public abstract class AbstractConfiguration {
 	public static String CONF_DIR_ENV;
 	public static String DEFAULT_CONF_DIR_ENV = "CONF_DIR";
 
-	private static final String NAME_PREFIX = "--";
-	private static final String OPTION_PREFIX = "-";
+	static final String NAME_PREFIX = "--";
+	static final String OPTION_PREFIX = "-";
 	public static final String OPTION_PATTERN = "[a-zA-Z]";
 	public static final String NAME_PATTERN = "[a-zA-Z0-9]+([_\\.][a-zA-Z0-9]+)*";
 	private static final String HELP_NAME = NAME_PREFIX + GenerateConfig.HELP;
@@ -61,18 +58,29 @@ public abstract class AbstractConfiguration {
 		return name.replaceAll("\\.", "_");
 	}
 
+	public static void setArgFormatIfItsEmpty(ParamValueSeparator argFormat) {
+		if (PARAM_VALUE_SEPARATOR == null) {
+			PARAM_VALUE_SEPARATOR = argFormat;
+		}
+	}
+
+	public static void setConfDirEnvNameIfItsEmpty(String confDirEnvName) {
+		if (CONF_DIR_ENV == null) {
+			CONF_DIR_ENV = confDirEnvName;
+		}
+	}
+
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 	private List<Object> resources = new ArrayList<Object>();
 	private String[] args = new String[0];
 	private String helpName = "app-name";
-	private String helpDescription = "";
 
+	private String helpDescription = "";
 	private List<IParamDefinition> confDefs;
 	private Map<IParamDefinition, PropertyDescriptor> properties;
 	private Map<String, IParamDefinition> byName = new HashMap<String, IParamDefinition>();
 	private Map<String, IParamDefinition> byEnv = new HashMap<String, IParamDefinition>();
 	private Map<String, IParamDefinition> byOption = new HashMap<String, IParamDefinition>();
-
 	private Map<Integer, IParamDefinition> byOrder = new HashMap<Integer, IParamDefinition>();
 
 	protected boolean suspendValidation;
@@ -185,7 +193,8 @@ public abstract class AbstractConfiguration {
 				throw new IllegalArgumentException("Invalid argument: " + arg);
 			}
 
-			if (PARAM_VALUE_SEPARATOR.getValuePlace() == ValuePlace.NEXT_ARG && ++i >= args.length) {
+			if (PARAM_VALUE_SEPARATOR.getValuePlace() == ParamValueSeparator.ValuePlace.NEXT_ARG
+					&& ++i >= args.length) {
 				throw new IllegalArgumentException("Missing value for argument: " + arg);
 			}
 
@@ -463,85 +472,6 @@ public abstract class AbstractConfiguration {
 			}
 		}
 		return sb.toString();
-	}
-
-	public static enum ParamValueSeparator {
-
-		SPACE_SEPARATOR(null, ValuePlace.NEXT_ARG),
-		EQUAL_SEPARATOR("=", ValuePlace.SAME_ARG);
-
-		private final String separator;
-		private final ValuePlace valuePlace;
-		private String namePattern = NAME_PREFIX + "(?<name>" + NAME_PATTERN + ")";
-		private String optionPattern = OPTION_PREFIX + "(?<option>" + OPTION_PATTERN + ")";
-		private String replacePattern = "(" + namePattern + "|" + optionPattern + ")";
-
-		private ParamValueSeparator(String separator, ValuePlace valuePlace) {
-			this.separator = separator;
-			this.valuePlace = valuePlace;
-			if (separator != null) {
-				namePattern += "\\Q" + separator + "\\E";
-				optionPattern += "\\Q" + separator + "\\E";
-				replacePattern += "\\Q" + separator + "\\E";
-			}
-		}
-
-		public String getSeparator() {
-			return separator;
-		}
-
-		public String getStringValue(String arg) {
-			if (valuePlace == ValuePlace.SAME_ARG) {
-				return arg.replaceFirst(replacePattern, "");
-			}
-			return arg;
-		}
-
-		public ValuePlace getValuePlace() {
-			return valuePlace;
-		}
-
-		public boolean matchName(String arg) {
-			return getNameMatcher(arg).matches();
-		}
-
-		public boolean matchOption(String arg) {
-			return getOptionMatcher(arg).matches();
-		}
-
-		public String name(String arg) {
-			Matcher matcher = getNameMatcher(arg);
-			if (matcher.matches()) {
-				return matcher.group("name");
-			}
-			return null;
-		}
-
-		public String option(String arg) {
-			Matcher matcher = getOptionMatcher(arg);
-			if (matcher.matches()) {
-				return matcher.group("option");
-			}
-			return null;
-		}
-
-		private Matcher getNameMatcher(String arg) {
-			return Pattern.compile(namePattern + valuePlace.patternSuffix).matcher(arg);
-		}
-
-		private Matcher getOptionMatcher(String arg) {
-			return Pattern.compile(optionPattern + valuePlace.patternSuffix).matcher(arg);
-		}
-
-		public enum ValuePlace {
-			SAME_ARG(".*"), NEXT_ARG("");
-
-			private final String patternSuffix;
-
-			private ValuePlace(String patternSuffix) {
-				this.patternSuffix = patternSuffix;
-			}
-		}
 	}
 
 	private enum ConfigSource {

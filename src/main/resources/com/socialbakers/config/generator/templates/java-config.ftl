@@ -1,6 +1,7 @@
 package ${package};
 
 import com.socialbakers.config.IParamDefinition;
+import com.socialbakers.config.ParamValueSeparator;
 
 /**
  * !!! Generated file - Do not modify it !!!
@@ -8,13 +9,8 @@ import com.socialbakers.config.IParamDefinition;
 public <#if abstract>abstract </#if>class ${className} extends ${superClass} {
 
 	static {
-		if (CONF_DIR_ENV == null) {
-			CONF_DIR_ENV = "${confDirEnv}";
-		}
-		if (${superClass}.PARAM_VALUE_SEPARATOR == null) {
-			${superClass}.PARAM_VALUE_SEPARATOR = ParamValueSeparator.${paramValueSeparator.name()};
-		}
-		ALWAYS_RELOAD = ${alwaysReload};
+		setArgFormatIfItsEmpty(ParamValueSeparator.${paramValueSeparator.name()});
+		setConfDirEnvNameIfItsEmpty("${confDirEnv}");
 	}
 
 <#list params as param>
