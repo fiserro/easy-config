@@ -58,6 +58,8 @@ public <#if abstract>abstract </#if>class ${className} extends ${superClass} {
 <#list params as param>
 	<#assign name = param.getJavaName()>
 	<#if param.description??><#assign desc = '"' + param.description + '"'><#else><#assign desc = "null"></#if>
+	<#assign desc = desc?replace("\\s+", " ", 'r')>
+	<#assign desc = desc?replace("\\n|\\r\\n", "", 'r')>
 	<#if param.env??><#assign env = '"' + param.env + '"'><#else><#assign env = "null"></#if>
 	<#if param.option??><#assign option = '"' + param.option + '"'><#else><#assign option = "null"></#if>
 	<#if param.order??><#assign order = param.order><#else><#assign order = "null"></#if>
