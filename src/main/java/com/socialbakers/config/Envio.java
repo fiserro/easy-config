@@ -15,43 +15,21 @@ import org.slf4j.LoggerFactory;
 
 public class Envio {
 
+	private static final String ENV_FILE = ".env";
 	private static final Logger LOGGER = LoggerFactory.getLogger(Envio.class);
 
 	public static void loadConfiguration() {
-
-		File envFile = new File(System.getProperty("user.dir"), File.separator + ".env");
-
-		if (!envFile.exists()) {
-			return;
+		String confDirEnv = System.getenv(AbstractConfiguration.CONF_DIR_ENV);
+		if (confDirEnv != null) {
+			if (tryLoadConf(new File(confDirEnv, ENV_FILE))) {
+				return;
+			}
+			if (tryLoadConf(new File(System.getProperty("user.dir") + File.separator + confDirEnv, ENV_FILE))) {
+				return;
+			}
 		}
-
-		LOGGER.info("Loading envio configuration: {}", envFile);
-
-		BufferedReader br = null;
-
-		try {
-			br = new BufferedReader(new FileReader(System.getProperty("user.dir") + File.separator + ".env"));
-
-			Map<String, String> currentEnv = System.getenv();
-			Map<String, String> newEnv = new HashMap<String, String>();
-
-			for (Entry<String, String> entry : currentEnv.entrySet()) {
-				newEnv.put(entry.getKey(), entry.getValue());
-			}
-			String line;
-
-			while ((line = br.readLine()) != null) {
-				String[] conf = line.split("=", 2);
-
-				if (conf.length == 2) {
-					newEnv.put(conf[0], conf[1]);
-				}
-			}
-			setEnv(newEnv);
-		} catch (Exception e1) {
-			LOGGER.error(e1.getMessage(), e1);
-		} finally {
-			IOUtils.closeQuietly(br);
+		if (tryLoadConf(new File(System.getProperty("user.dir"), File.separator + ENV_FILE))) {
+			return;
 		}
 	}
 
@@ -90,5 +68,41 @@ public class Envio {
 		} catch (Exception e1) {
 			LOGGER.error(e1.getMessage(), e1);
 		}
+	}
+
+	private static boolean tryLoadConf(File envFile) {
+		if (!envFile.exists()) {
+			return false;
+		}
+
+		LOGGER.info("Loading envio configuration: {}", envFile);
+
+		BufferedReader br = null;
+
+		try {
+			br = new BufferedReader(new FileReader(envFile));
+
+			Map<String, String> currentEnv = System.getenv();
+			Map<String, String> newEnv = new HashMap<String, String>();
+
+			for (Entry<String, String> entry : currentEnv.entrySet()) {
+				newEnv.put(entry.getKey(), entry.getValue());
+			}
+			String line;
+
+			while ((line = br.readLine()) != null) {
+				String[] conf = line.split("=", 2);
+
+				if (conf.length == 2) {
+					newEnv.put(conf[0], conf[1]);
+				}
+			}
+			setEnv(newEnv);
+		} catch (Exception e1) {
+			LOGGER.error(e1.getMessage(), e1);
+		} finally {
+			IOUtils.closeQuietly(br);
+		}
+		return true;
 	}
 }
