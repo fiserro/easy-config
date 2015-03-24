@@ -1,6 +1,7 @@
 package com.socialbakers.config.test;
 
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.socialbakers.config.Envio;
@@ -9,6 +10,7 @@ public class ConfigurationLoadFromEnvTest {
 
 	private static final String TEST_CONF_DIR_ENV = "TEST_CONF_DIR_ENV";
 
+	@Ignore
 	@Test
 	public void testLoadDevEnv() {
 
@@ -22,6 +24,7 @@ public class ConfigurationLoadFromEnvTest {
 		Assert.assertEquals(new Integer(1111), config.getPort());
 	}
 
+	@Ignore
 	@Test
 	public void testLoadProductionEnv() {
 
