@@ -18,17 +18,16 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
-import org.eclipse.jdt.internal.core.Assert;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.input.SAXBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Preconditions;
 import com.socialbakers.config.exception.ConfigurationException;
 import com.socialbakers.config.exception.DumpException;
 import com.socialbakers.config.exception.HelpException;
-import com.socialbakers.config.generator.GenerateConfig;
 
 import freemarker.template.Configuration;
 import freemarker.template.Template;
@@ -49,10 +48,10 @@ public abstract class AbstractConfiguration {
 	static final String OPTION_PREFIX = "-";
 	public static final String OPTION_PATTERN = "[a-zA-Z]";
 	public static final String NAME_PATTERN = "[a-zA-Z0-9]+([_\\.][a-zA-Z0-9]+)*";
-	private static final String HELP_NAME = NAME_PREFIX + GenerateConfig.HELP;
-	private static final String HELP_OPTION = OPTION_PREFIX + GenerateConfig.HELP;
-	private static final String DUMP_NAME = NAME_PREFIX + GenerateConfig.DUMP;
-	private static final String DUMP_OPTION = OPTION_PREFIX + GenerateConfig.DUMP;
+	private static final String HELP_NAME = NAME_PREFIX + IParamDefinition.HELP;
+	private static final String HELP_OPTION = OPTION_PREFIX + IParamDefinition.HELP;
+	private static final String DUMP_NAME = NAME_PREFIX + IParamDefinition.DUMP;
+	private static final String DUMP_OPTION = OPTION_PREFIX + IParamDefinition.DUMP;
 
 	public static String replaceDots(String name) {
 		return name.replaceAll("\\.", "_");
@@ -136,8 +135,8 @@ public abstract class AbstractConfiguration {
 			if (StringUtils.isNotBlank(confDef.getName())) {
 				byName.put(replaceDots(confDef.getName()), confDef);
 			}
-			if (StringUtils.isNotBlank(confDef.getEnv())) {
-				byEnv.put(confDef.getEnv(), confDef);
+			for (String env : confDef.getEnvs()) {
+				byEnv.put(env, confDef);
 			}
 			if (StringUtils.isNotBlank(confDef.getOption())) {
 				byOption.put(confDef.getOption(), confDef);
@@ -208,7 +207,7 @@ public abstract class AbstractConfiguration {
 		this.args = args;
 
 		for (String arg : args) {
-			Assert.isNotNull(arg);
+			Preconditions.checkNotNull(arg);
 			if (arg.startsWith(HELP_NAME) || arg.startsWith(HELP_OPTION)) {
 				String msg;
 				msg = helpMsg();
@@ -370,9 +369,12 @@ public abstract class AbstractConfiguration {
 
 	private void reloadFromEnvVars() {
 		for (IParamDefinition confDef : byEnv.values()) {
-			if (System.getenv(confDef.getEnv()) != null) {
-				String value = System.getenv(confDef.getEnv());
-				setValue(confDef, value, ConfigSource.ENV, confDef.getEnv());
+			for (String env : confDef.getEnvs()) {
+				String value = System.getenv(env);
+				if (value != null) {
+					setValue(confDef, value, ConfigSource.ENV, env);
+					break;
+				}
 			}
 		}
 	}

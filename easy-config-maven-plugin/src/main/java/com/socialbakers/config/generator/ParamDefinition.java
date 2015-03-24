@@ -1,6 +1,7 @@
 package com.socialbakers.config.generator;
 
 import com.socialbakers.config.AbstractConfiguration;
+import com.socialbakers.config.Envio;
 import com.socialbakers.config.IParamDefinition;
 
 public class ParamDefinition implements IParamDefinition {
@@ -12,6 +13,7 @@ public class ParamDefinition implements IParamDefinition {
 	private String description;
 	private String javaType = "String";
 	private String defaultValue;
+
 	private boolean required;
 
 	@Override
@@ -27,6 +29,11 @@ public class ParamDefinition implements IParamDefinition {
 	@Override
 	public String getEnv() {
 		return env;
+	}
+
+	@Override
+	public String[] getEnvs() {
+		return Envio.splitEnvNames(env);
 	}
 
 	@Override
@@ -58,5 +65,4 @@ public class ParamDefinition implements IParamDefinition {
 	public boolean isRequired() {
 		return required;
 	}
-
 }

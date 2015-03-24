@@ -18,8 +18,8 @@ import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
-import org.eclipse.jdt.internal.core.Assert;
 
+import com.google.common.base.Preconditions;
 import com.socialbakers.config.AbstractConfiguration;
 import com.socialbakers.config.IParamDefinition;
 import com.socialbakers.config.ParamValueSeparator;
@@ -35,9 +35,6 @@ import freemarker.template.TemplateExceptionHandler;
 public class GenerateConfig extends AbstractMojo {
 
 	private static final String PACKAGE_CLASS_REGEX = "(([a-z_]+\\.)*)([A-Z_][A-Za-z0-9_]*)";
-
-	public static final String HELP = "help";
-	public static final String DUMP = "dump";
 
 	@Parameter
 	private List<ParamDefinition> params;
@@ -96,7 +93,8 @@ public class GenerateConfig extends AbstractMojo {
 
 	private static final String START_WITH_NUMBER = "[0-9].*";
 
-	private static final Set<String> RESERVED_WORDS = new HashSet<String>(Arrays.asList(HELP, DUMP, "desc", "env",
+	private static final Set<String> RESERVED_WORDS = new HashSet<String>(Arrays.asList(IParamDefinition.HELP,
+			IParamDefinition.DUMP, "desc", "env",
 			"option", "order", "required", "defaultValue", "javaType", "paramName"));
 
 	@Override
@@ -113,7 +111,7 @@ public class GenerateConfig extends AbstractMojo {
 
 			Matcher matcher = Pattern.compile(PACKAGE_CLASS_REGEX).matcher(configClass);
 			boolean find = matcher.find();
-			Assert.isTrue(find);
+			Preconditions.checkState(find);
 
 			packagePath = matcher.group(1);
 			className = matcher.group(3);
@@ -199,7 +197,11 @@ public class GenerateConfig extends AbstractMojo {
 				}
 				checkConflict(p1.getName(), p2.getName(), "name");
 				checkConflict(p1.getOption(), p2.getOption(), "option");
-				checkConflict(p1.getEnv(), p2.getEnv(), "env var");
+				for (String env1 : p1.getEnvs()) {
+					for (String env2 : p2.getEnvs()) {
+						checkConflict(env1, env2, "env var");
+					}
+				}
 			}
 		}
 	}
@@ -240,7 +242,9 @@ public class GenerateConfig extends AbstractMojo {
 
 		for (ParamDefinition p : params) {
 			checkUnique(p.getName(), "name", names);
-			checkUnique(p.getEnv(), "env. var.", envVars);
+			for (String env : p.getEnvs()) {
+				checkUnique(env, "env. var.", envVars);
+			}
 			checkUnique(p.getOption(), "option", options);
 			checkUnique(p.getOrder(), "order", orders);
 		}

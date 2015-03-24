@@ -99,6 +99,11 @@ public <#if abstract>abstract </#if>class ${className} extends ${superClass} {
 		public String getEnv() {
 			return env;
 		}
+		
+		@Override
+		public String[] getEnvs() {
+			return com.socialbakers.config.Envio.splitEnvNames(env);
+		}
 
 		@Override
 		public String getJavaName() {

@@ -17,6 +17,7 @@ public class Envio {
 
 	private static final String ENV_FILE = ".env";
 	private static final Logger LOGGER = LoggerFactory.getLogger(Envio.class);
+	private static final String ENV_DELIMITER = "\\|";
 
 	public static void loadConfiguration() {
 		String confDirEnv = System.getenv(AbstractConfiguration.CONF_DIR_ENV);
@@ -33,21 +34,34 @@ public class Envio {
 		}
 	}
 
+	public static void setEnv(String name, String value) {
+		HashMap<String, String> newEnv = new HashMap<String, String>();
+		newEnv.put(name, value);
+		setEnv(newEnv);
+	}
+
+	public static String[] splitEnvNames(String env) {
+		if (env == null || "".equals(env)) {
+			return new String[0];
+		}
+		return env.trim().split(ENV_DELIMITER);
+	}
+
 	/**
 	 * code from http://stackoverflow.com/a/7201825
 	 */
-	protected static void setEnv(Map<String, String> newenv) {
+	private static void setEnv(Map<String, String> newEnv) {
 		try {
 			Class<?> processEnvironmentClass = Class.forName("java.lang.ProcessEnvironment");
 			Field theEnvironmentField = processEnvironmentClass.getDeclaredField("theEnvironment");
 			theEnvironmentField.setAccessible(true);
 			Map<String, String> env = (Map<String, String>) theEnvironmentField.get(null);
-			env.putAll(newenv);
+			env.putAll(newEnv);
 			Field theCaseInsensitiveEnvironmentField = processEnvironmentClass
 					.getDeclaredField("theCaseInsensitiveEnvironment");
 			theCaseInsensitiveEnvironmentField.setAccessible(true);
 			Map<String, String> cienv = (Map<String, String>) theCaseInsensitiveEnvironmentField.get(null);
-			cienv.putAll(newenv);
+			cienv.putAll(newEnv);
 		} catch (NoSuchFieldException e) {
 			try {
 				Class[] classes = Collections.class.getDeclaredClasses();
@@ -59,7 +73,7 @@ public class Envio {
 						Object obj = field.get(env);
 						Map<String, String> map = (Map<String, String>) obj;
 						map.clear();
-						map.putAll(newenv);
+						map.putAll(newEnv);
 					}
 				}
 			} catch (Exception e2) {

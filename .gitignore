@@ -1,7 +1,7 @@
-/target
-.classpath
-.project
-.settings/
-pom.xml.versionsBackup
+/**/target
+/**/.classpath
+/**/.project
+/**/.settings/
+/**/pom.xml.versionsBackup
 release.sh
 
