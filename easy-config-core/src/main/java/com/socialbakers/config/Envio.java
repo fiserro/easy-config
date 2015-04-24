@@ -72,8 +72,9 @@ public class Envio {
 						field.setAccessible(true);
 						Object obj = field.get(env);
 						Map<String, String> map = (Map<String, String>) obj;
-						map.clear();
-						map.putAll(newEnv);
+						for (Entry<String, String> entry : newEnv.entrySet()) {
+							map.put(entry.getKey(), entry.getValue());
+						}
 					}
 				}
 			} catch (Exception e2) {
@@ -96,14 +97,14 @@ public class Envio {
 		try {
 			br = new BufferedReader(new FileReader(envFile));
 
-			Map<String, String> currentEnv = System.getenv();
 			Map<String, String> newEnv = new HashMap<String, String>();
 
-			for (Entry<String, String> entry : currentEnv.entrySet()) {
-				newEnv.put(entry.getKey(), entry.getValue());
-			}
-			String line;
+			// Map<String, String> currentEnv = System.getenv();
+			// for (Entry<String, String> entry : currentEnv.entrySet()) {
+			// newEnv.put(entry.getKey(), entry.getValue());
+			// }
 
+			String line;
 			while ((line = br.readLine()) != null) {
 				String[] conf = line.split("=", 2);
 
