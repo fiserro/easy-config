@@ -15,7 +15,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.socialbakers.easy-config</groupId>
   <artifactId>easy-config</artifactId>
-  <version>0.5</version>
+  <version>0.5.1-SNAPSHOT</version>
   <name>Easy Config</name>
   <description>Maven plugin for small application config support. Allows you to define configuration for your application at one place and generate config files and java class. Configuration can be instantiate by var args, file config or environment variables or combination of all.
 
