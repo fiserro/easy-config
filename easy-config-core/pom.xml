@@ -5,9 +5,9 @@
   <name>Easy Config - Core</name>
 
   <parent>
-    <groupId>com.socialbakers</groupId>
+    <groupId>com.socialbakers.easy-config</groupId>
     <artifactId>easy-config</artifactId>
-    <version>0.4.4-SNAPSHOT</version>
+    <version>0.5</version>
   </parent>
 
   <dependencies>

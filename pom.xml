@@ -8,15 +8,14 @@
 
   <modules>
     <module>easy-config-maven-plugin</module>
-    <module>easy-config-test</module>
     <module>easy-config-core</module>
   </modules>
 
   <packaging>pom</packaging>
   <modelVersion>4.0.0</modelVersion>
-  <groupId>com.socialbakers</groupId>
+  <groupId>com.socialbakers.easy-config</groupId>
   <artifactId>easy-config</artifactId>
-  <version>0.4.4-SNAPSHOT</version>
+  <version>0.5</version>
   <name>Easy Config</name>
   <description>Maven plugin for small application config support. Allows you to define configuration for your application at one place and generate config files and java class. Configuration can be instantiate by var args, file config or environment variables or combination of all.
 
@@ -57,12 +56,12 @@ TODO:
   <dependencyManagement>
     <dependencies>
       <dependency>
-        <groupId>com.socialbakers</groupId>
+        <groupId>com.socialbakers.easy-config</groupId>
         <artifactId>easy-config-core</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>com.socialbakers</groupId>
+        <groupId>com.socialbakers.easy-config</groupId>
         <artifactId>easy-config-maven-plugin</artifactId>
         <version>${project.version}</version>
       </dependency>
@@ -121,7 +120,6 @@ TODO:
     </dependencies>
   </dependencyManagement>
 
-
   <build>
     <plugins>
       <plugin>
@@ -135,26 +133,31 @@ TODO:
     </plugins>
   </build>
 
-
   <profiles>
     <profile>
+      <!-- include test module to check maven-plugin. this module is not deployed by default -->
+      <id>maven-plugin-test</id>
+      <modules>
+        <module>easy-config-maven-plugin</module>
+        <module>easy-config-test</module>
+        <module>easy-config-core</module>
+      </modules>
+    </profile>
 
+    <profile>
       <id>nexus-deploy</id>
-
       <distributionManagement>
         <repository>
           <id>nexus</id>
           <name>Releases</name>
           <url>http://mvn.ccl/nexus/content/repositories/releases</url>
         </repository>
-
         <snapshotRepository>
           <id>nexus</id>
           <name>Snapshots</name>
           <url>http://mvn.ccl/nexus/content/repositories/snapshots</url>
         </snapshotRepository>
       </distributionManagement>
-
       <repositories>
         <repository>
           <id>nexus</id>
@@ -168,7 +171,6 @@ TODO:
           </snapshots>
         </repository>
       </repositories>
-
       <pluginRepositories>
         <pluginRepository>
           <id>nexus</id>

@@ -1,52 +1,20 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
   <parent>
-    <groupId>com.socialbakers</groupId>
+    <groupId>com.socialbakers.easy-config</groupId>
     <artifactId>easy-config</artifactId>
-    <version>0.4.4-SNAPSHOT</version>
+    <version>0.5</version>
   </parent>
 
   <modelVersion>4.0.0</modelVersion>
   <artifactId>easy-config-maven-plugin</artifactId>
   <name>Easy Config - Maven Plugin</name>
-  <description>Maven plugin for small application config support. Allows you to define configuration for your application at one place and generate config files and java class. Configuration can be instantiate by var args, file config or environment variables or combination of all.
-
-TODO:
-- boolean opts
--- is/get
--- option without value true
-- make def enum public
-- static instance to access from everywhere without pass an instance
--static enum Def
--more executions with different configuration has conflict in options and names</description>
-  <url>https://github.com/fiserro/easy-config</url>
-  <licenses>
-    <license>
-      <name>The Apache Software License, Version 2.0</name>
-      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-      <distribution>repo</distribution>
-    </license>
-  </licenses>
-  <scm>
-    <url>https://github.com/fiserro/easy-config.git</url>
-    <connection>scm:git:https://github.com/fiserro/easy-config.git</connection>
-  </scm>
-  <developers>
-    <developer>
-      <id>fiserro</id>
-      <name>Robert Fiser</name>
-      <email>robert.fiser@socialbakers.com</email>
-    </developer>
-  </developers>
+  <description>Maven plugin for small application config support. Allows you to define configuration for your application at one place and generate config files and java class. Configuration can be instantiate by var args, file config or environment variables or combination of all.</description>
   <packaging>maven-plugin</packaging>
-
-  <properties>
-    <sonatypeOssDistMgmtSnapshotsUrl>https://oss.sonatype.org/content/repositories/snapshots/</sonatypeOssDistMgmtSnapshotsUrl>
-  </properties>
 
   <dependencies>
     <dependency>
-      <groupId>com.socialbakers</groupId>
+      <groupId>com.socialbakers.easy-config</groupId>
       <artifactId>easy-config-core</artifactId>
     </dependency>
     <dependency>
@@ -108,55 +76,5 @@ TODO:
       </plugin>
     </plugins>
   </build>
-
-
-  <profiles>
-    <profile>
-
-      <id>nexus-deploy</id>
-
-      <distributionManagement>
-        <repository>
-          <id>nexus</id>
-          <name>Releases</name>
-          <url>http://mvn.ccl/nexus/content/repositories/releases</url>
-        </repository>
-
-        <snapshotRepository>
-          <id>nexus</id>
-          <name>Snapshots</name>
-          <url>http://mvn.ccl/nexus/content/repositories/snapshots</url>
-        </snapshotRepository>
-      </distributionManagement>
-
-      <repositories>
-        <repository>
-          <id>nexus</id>
-          <name>Public repository</name>
-          <url>http://mvn.ccl/nexus/content/groups/public/</url>
-          <releases>
-            <enabled>true</enabled>
-          </releases>
-          <snapshots>
-            <enabled>true</enabled>
-          </snapshots>
-        </repository>
-      </repositories>
-
-      <pluginRepositories>
-        <pluginRepository>
-          <id>nexus</id>
-          <name>nexus</name>
-          <url>http://mvn.ccl/nexus/content/groups/public</url>
-          <releases>
-            <enabled>true</enabled>
-          </releases>
-          <snapshots>
-            <enabled>true</enabled>
-          </snapshots>
-        </pluginRepository>
-      </pluginRepositories>
-    </profile>
-  </profiles>
 
 </project>

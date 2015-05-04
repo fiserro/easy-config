@@ -5,18 +5,18 @@
   <name>Easy Config - Test</name>
 
   <parent>
-     <groupId>com.socialbakers</groupId>
+     <groupId>com.socialbakers.easy-config</groupId>
      <artifactId>easy-config</artifactId>
-     <version>0.4.4-SNAPSHOT</version>
+     <version>0.5</version>
   </parent>
 
   <properties>
-    <easyConfigVersion>0.4.4-SNAPSHOT</easyConfigVersion>
+    <sonatypeOssDistMgmtSnapshotsUrl>https://oss.sonatype.org/content/repositories/snapshots/</sonatypeOssDistMgmtSnapshotsUrl>
   </properties>
 
   <dependencies>
     <dependency>
-      <groupId>com.socialbakers</groupId>
+      <groupId>com.socialbakers.easy-config</groupId>
       <artifactId>easy-config-core</artifactId>
     </dependency>
     <dependency>
@@ -29,7 +29,7 @@
   <build>
     <plugins>
       <plugin>
-        <groupId>com.socialbakers</groupId>
+        <groupId>com.socialbakers.easy-config</groupId>
         <artifactId>easy-config-maven-plugin</artifactId>
         <version>${project.version}</version>
         <configuration>
