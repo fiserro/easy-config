@@ -19,6 +19,10 @@
   <name>Easy Config</name>
   <description>Maven plugin for small application config support. Allows you to define configuration for your application at one place and generate config files and java class. Configuration can be instantiate by var args, file config or environment variables or combination of all.
 
+ISSUES:
+-v potomkovi mam rucne psanou pomocnou property, ta se nesmi dostat do property descriptoru, pak je tam s klicem null
+-pokud reloadArgs byposition vrati null, vyhodit hned vyjimku - confDef = byOrder.get(iPos++);
+
 TODO:
 - boolean opts
 -- is/get

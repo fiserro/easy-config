@@ -65,4 +65,37 @@ public class ParamDefinition implements IParamDefinition {
 	public boolean isRequired() {
 		return required;
 	}
+
+	public void setDefaultValue(String defaultValue) {
+		this.defaultValue = defaultValue;
+	}
+
+	public void setDescription(String description) {
+		this.description = description;
+	}
+
+	public void setEnv(String env) {
+		this.env = env;
+	}
+
+	public void setJavaType(String javaType) {
+		this.javaType = javaType;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public void setOption(String option) {
+		this.option = option;
+	}
+
+	public void setOrder(Integer order) {
+		this.order = order;
+	}
+
+	public void setRequired(boolean required) {
+		this.required = required;
+	}
+
 }

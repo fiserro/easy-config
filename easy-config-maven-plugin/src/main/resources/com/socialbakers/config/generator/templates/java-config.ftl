@@ -1,7 +1,8 @@
 package ${package};
 
-import com.socialbakers.config.IParamDefinition;
-import com.socialbakers.config.ParamValueSeparator;
+<#list imports as i>
+${i}
+</#list>
 
 /**
  * !!! Generated file - Do not modify it !!!
@@ -23,12 +24,12 @@ public <#if abstract>abstract </#if>class ${className} extends ${superClass} {
 	private ${param.javaType} ${param.getJavaName()}<#if param.defaultValue??> = ${x0}${param.defaultValue}${x1}</#if>;
 </#list>
 	
-	protected ${className}(String helpName, String helpDescription) {
-		super(helpName, helpDescription);
-	}
+	//protected ${className}(String helpName, String helpDescription) {
+	//	super(helpName, helpDescription);
+	//}
 	
 	public ${className}(String[] args) {
-		this("${helpName}", "${helpDescription}");
+		super("${helpName}", "${helpDescription}", "${envFile}");
 		addDef(Def.values());
 		<#if genXml>addResource("${configFileDefault}");
 		addResource("${configFileSite}");</#if>
@@ -40,7 +41,7 @@ public <#if abstract>abstract </#if>class ${className} extends ${superClass} {
 	public ${param.javaType} get${param.getJavaName()?cap_first}() {
 		if (ALWAYS_RELOAD) {
 			reload();
-		}		
+		}
 		return ${param.getJavaName()};
 	}
 	

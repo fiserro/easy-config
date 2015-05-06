@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -36,59 +37,58 @@ public class GenerateConfig extends AbstractMojo {
 
 	private static final String PACKAGE_CLASS_REGEX = "(([a-z_]+\\.)*)([A-Z_][A-Za-z0-9_]*)";
 
-	@Parameter
+	@Parameter(required = true)
 	private List<ParamDefinition> params;
-
-	private Map<String, IParamDefinition> iParams = new LinkedHashMap<String, IParamDefinition>();
 
 	@Parameter(alias = "outputDir")
 	private String outputDirName;
 
-	@Parameter
+	@Parameter(required = true)
 	private String configClass;
 
-	@Parameter
+	@Parameter(defaultValue = ".env")
 	private String envFile = ".env";
 
-	@Parameter
+	@Parameter(defaultValue = "configuration-default.xml")
 	private String configFileDefault = "configuration-default.xml";
 
-	@Parameter
+	@Parameter(defaultValue = "configuration-site.xml")
 	private String configFileSite = "configuration-site.xml";
 
-	@Parameter
-	private String helpName = "";
+	@Parameter(alias = "name", defaultValue = "<WARNING: Name is not set!>")
+	private String helpName = "<WARNING: Name is not set!>";
 
-	@Parameter
-	private String helpDescription = "";
+	@Parameter(alias = "description", defaultValue = "<WARNING: Description is not set!>")
+	private String helpDescription = "<WARNING: Description is not set!>";
 
-	@Parameter(alias = "abstract")
+	@Parameter(alias = "abstract", defaultValue = "false")
 	private boolean abstr;
 
-	@Parameter
+	@Parameter(defaultValue = "SPACE_SEPARATOR")
 	private ParamValueSeparator paramValueSeparator = ParamValueSeparator.SPACE_SEPARATOR;
 
-	@Parameter
+	@Parameter(defaultValue = "false")
 	private boolean alwaysReload;
 
-	@Parameter
+	@Parameter(defaultValue = "conf/")
 	private String confDirEnv = "conf/";
 
-	@Parameter
+	@Parameter(defaultValue = "com.socialbakers.config.AbstractConfiguration")
 	private String superClass = "com.socialbakers.config.AbstractConfiguration";
 
-	@Parameter
+	@Parameter(defaultValue = "false")
 	private boolean genEnv = false;
 
-	@Parameter
-	private boolean genXml = true;
+	@Parameter(defaultValue = "false")
+	private boolean genXml = false;
+
+	private Map<String, IParamDefinition> iParams = new LinkedHashMap<String, IParamDefinition>();
 	private String className;
 	private String packagePath;
 	private File javaConfig;
 	private File envConfig;
 	private File xmlDefaultConfig;
 	private File xmlSiteConfig;
-
 	private File outputDir;
 
 	private static final String START_WITH_NUMBER = "[0-9].*";
@@ -97,15 +97,24 @@ public class GenerateConfig extends AbstractMojo {
 			IParamDefinition.DUMP, "desc", "env",
 			"option", "order", "required", "defaultValue", "javaType", "paramName"));
 
+	private static String LIST_JAVA_TYPE_PATTERN = "List\\([A-Z][a-z]+\\)";
+
 	@Override
 	public void execute() throws MojoExecutionException {
 
 		getLog().info(this.toString());
 
 		try {
-			for (IParamDefinition param : params) {
+			Set<String> imports = new LinkedHashSet<String>();
+			imports.add("import com.socialbakers.config.IParamDefinition;");
+			imports.add("import com.socialbakers.config.ParamValueSeparator;");
+			for (ParamDefinition param : params) {
 				getLog().info("Adding param: " + param.getName());
 				iParams.put(param.getName(), param);
+				if (param.getJavaType().matches(LIST_JAVA_TYPE_PATTERN)) {
+					imports.add("import java.util.List;");
+					param.setJavaType(param.getJavaType().replaceFirst("\\(", "<").replaceFirst("\\)", ">"));
+				}
 			}
 			validate();
 
@@ -135,6 +144,7 @@ public class GenerateConfig extends AbstractMojo {
 			validate();
 
 			Map<String, Object> input = new HashMap<String, Object>();
+			input.put("imports", imports);
 			input.put("params", iParams.values());
 			input.put("package", packagePath);
 			input.put("className", className);
@@ -149,6 +159,7 @@ public class GenerateConfig extends AbstractMojo {
 			input.put("superClass", superClass);
 			input.put("genXml", genXml);
 			input.put("genEnv", genEnv);
+			input.put("envFile", envFile);
 
 			javaConfig = new File(outputDir, packagePath.replaceAll("\\.", "/"));
 			javaConfig.mkdirs();
@@ -203,6 +214,21 @@ public class GenerateConfig extends AbstractMojo {
 					}
 				}
 			}
+		}
+	}
+
+	private void checkMultivalPositional() {
+		boolean hasMultival = false;
+		boolean hasPositional = false;
+		for (IParamDefinition p : iParams.values()) {
+			hasMultival |= p.getJavaName().matches(LIST_JAVA_TYPE_PATTERN);
+			hasPositional |= p.getOrder() != null;
+		}
+		if (hasMultival && hasPositional) {
+			throw new IllegalStateException("Cannot use multival and positional parametter in the same config");
+		}
+		if (hasMultival && paramValueSeparator != ParamValueSeparator.SPACE_SEPARATOR) {
+			throw new IllegalStateException("Cannot use multival without space-value-separator");
 		}
 	}
 
@@ -281,6 +307,7 @@ public class GenerateConfig extends AbstractMojo {
 	}
 
 	private void validate() {
+		checkMultivalPositional();
 		checkNamesAreSet();
 		checkUniqueIdentifiers();
 		checkConflicts();

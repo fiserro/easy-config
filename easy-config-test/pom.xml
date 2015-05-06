@@ -5,9 +5,9 @@
   <name>Easy Config - Test</name>
 
   <parent>
-     <groupId>com.socialbakers.easy-config</groupId>
-     <artifactId>easy-config</artifactId>
-     <version>0.5.1-SNAPSHOT</version>
+    <groupId>com.socialbakers.easy-config</groupId>
+    <artifactId>easy-config</artifactId>
+    <version>0.5.1-SNAPSHOT</version>
   </parent>
 
   <properties>
@@ -18,6 +18,11 @@
     <dependency>
       <groupId>com.socialbakers.easy-config</groupId>
       <artifactId>easy-config-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-log4j12</artifactId>
+      <version>1.7.12</version>
     </dependency>
     <dependency>
       <groupId>junit</groupId>
@@ -32,107 +37,90 @@
         <groupId>com.socialbakers.easy-config</groupId>
         <artifactId>easy-config-maven-plugin</artifactId>
         <version>${project.version}</version>
-        <configuration>
-          <outputDir>${project.build.directory}/generated-sources</outputDir>
-          <abstract>false</abstract>
-          <configClass>com.socialbakers.config.test.Configuration</configClass>
-          <superClass>com.socialbakers.config.AbstractConfiguration</superClass>
-          <envFile>.env</envFile>
-          <genEnv>true</genEnv>
-          <paramValueSeparator>SPACE_SEPARATOR</paramValueSeparator>
-          <alwaysReload>true</alwaysReload>
-          <confDirEnv>TEST_CONF_DIR_ENV</confDirEnv>
-          <params>
-            <param>
-              <name>zookeeper</name>
-              <order>1</order>
-              <env>PHOENIX_ZK|PHOENIX_ZK_DEV</env>
-              <description>Zookeeper connection string</description>
-              <javaType>String</javaType>
-              <required>true</required>
-            </param>
-            <param>
-              <name>port</name>
-              <order>0</order>
-              <env>PORT</env>
-              <description>Listening port</description>
-              <javaType>Integer</javaType>
-              <required>true</required>
-            </param>
-            <param>
-              <name>corePoolSize</name>
-              <option>c</option>
-              <env>CORE_POOL_SIZE</env>
-              <description>Core size of thread pool</description>
-              <javaType>int</javaType>
-              <defaultValue>32</defaultValue>
-            </param>
-            <param>
-              <name>maxPoolSize</name>
-              <option>m</option>
-              <env>MAX_POOL_SIZE</env>
-              <description>Maximum size of thread pool</description>
-              <javaType>int</javaType>
-              <defaultValue>64</defaultValue>
-            </param>
-            <param>
-              <name>queueSize</name>
-              <option>q</option>
-              <env>QUEUE_SIZE</env>
-              <description>Size of thread queue</description>
-              <javaType>int</javaType>
-              <defaultValue>65384</defaultValue>
-            </param>
-            <param>
-              <name>keepAliveTime</name>
-              <option>k</option>
-              <env>KEEP_ALIVE_TIME</env>
-              <description>Time in millisecond to keep alive idle connection thread</description>
-              <javaType>int</javaType>
-              <defaultValue>60000</defaultValue>
-            </param>
-            <param>
-              <name>maxRequestLen</name>
-              <option>r</option>
-              <env>MAX_REQUEST_LEN</env>
-              <description>Maximum length of request message in bytes</description>
-              <javaType>int</javaType>
-              <defaultValue>10485760</defaultValue>
-            </param>
-            <param>
-              <name>maxConnRetries</name>
-              <option>t</option>
-              <env>MAX_CONN_RETRIES</env>
-              <description>Maximum retries attempts to get zooKeeper connection</description>
-              <javaType>int</javaType>
-              <defaultValue>3</defaultValue>
-            </param>
-
-            <param>
-              <name>hera.zk</name>
-              <option>h</option>
-              <env>HERA|HERA_DEV</env>
-              <description>Hera</description>
-              <javaType>String</javaType>
-            </param>
-
-            <param>
-              <name>heraVersionPrefix</name>
-              <option>x</option>
-              <env>HERA_VERSION_PREFIX</env>
-              <description>Hera version prefix</description>
-              <javaType>String</javaType>
-            </param>
-
-          </params>
-        </configuration>
         <executions>
+
           <execution>
+            <id>generate-positional-basics</id>
             <phase>generate-sources</phase>
             <goals>
               <goal>generate-config</goal>
             </goals>
+            <configuration>
+              <outputDir>${project.build.directory}/generated-sources</outputDir>
+              <abstract>false</abstract>
+              <configClass>com.socialbakers.config.test.BasicConf</configClass>
+              <superClass>com.socialbakers.config.AbstractConfiguration</superClass>
+              <envFile>env</envFile>
+              <genEnv>true</genEnv>
+              <paramValueSeparator>SPACE_SEPARATOR</paramValueSeparator>
+              <alwaysReload>true</alwaysReload>
+              <confDirEnv>TEST_CONF_DIR_ENV</confDirEnv>
+              <params>
+                <param>
+                  <name>zookeeper</name>
+                  <order>1</order>
+                  <env>PHOENIX_ZK|PHOENIX_ZK_DEV</env>
+                  <description>Zookeeper connection string - can be set by two environment variables</description>
+                  <javaType>String</javaType>
+                  <required>true</required>
+                </param>
+                <param>
+                  <name>port</name>
+                  <order>0</order>
+                  <env>PORT</env>
+                  <description>Listening port</description>
+                  <javaType>Integer</javaType>
+                  <required>true</required>
+                </param>
+                <param>
+                  <name>keepAliveTime</name>
+                  <option>k</option>
+                  <env>KEEP_ALIVE_TIME</env>
+                  <description>Time in millisecond to keep alive idle connection thread</description>
+                  <javaType>int</javaType>
+                  <defaultValue>60000</defaultValue>
+                </param>
+              </params>
+            </configuration>
           </execution>
+
+          <execution>
+            <id>generate-multival</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>generate-config</goal>
+            </goals>
+            <configuration>
+              <configClass>com.socialbakers.config.test.MultivalConf</configClass>
+              <envFile>env</envFile>
+              <confDirEnv>TEST_CONF_DIR_ENV</confDirEnv>
+              <params>
+                <param>
+                  <name>input.files</name>
+                  <option>i</option>
+                  <env>INPUT_FILES</env>
+                  <description>List of files(space separated filenames)</description>
+                  <javaType>List(String)</javaType>
+                </param>
+                <param>
+                  <name>operations</name>
+                  <option>p</option>
+                  <env>OPERATIONS</env>
+                  <description>List of operations(space separated operation codes)</description>
+                  <javaType>List(Integer)</javaType>
+                </param>
+                <param>
+                  <name>output.file</name>
+                  <option>o</option>
+                  <env>OUTPUT_FILE</env>
+                  <description>Output file</description>
+                  <javaType>String</javaType>
+                  <required>true</required>
+                </param>
+              </params>
+            </configuration>
+          </execution>
+
         </executions>
       </plugin>
 

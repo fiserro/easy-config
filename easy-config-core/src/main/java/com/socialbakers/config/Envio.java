@@ -15,21 +15,25 @@ import org.slf4j.LoggerFactory;
 
 public class Envio {
 
-	private static final String ENV_FILE = ".env";
+	public static final String ENV_FILE = ".env";
 	private static final Logger LOGGER = LoggerFactory.getLogger(Envio.class);
 	private static final String ENV_DELIMITER = "\\|";
 
 	public static void loadConfiguration() {
+		loadConfiguration(ENV_FILE);
+	}
+
+	public static void loadConfiguration(String envFile) {
 		String confDirEnv = System.getenv(AbstractConfiguration.CONF_DIR_ENV);
 		if (confDirEnv != null) {
-			if (tryLoadConf(new File(confDirEnv, ENV_FILE))) {
+			if (tryLoadConf(new File(confDirEnv, envFile))) {
 				return;
 			}
-			if (tryLoadConf(new File(System.getProperty("user.dir") + File.separator + confDirEnv, ENV_FILE))) {
+			if (tryLoadConf(new File(System.getProperty("user.dir") + File.separator + confDirEnv, envFile))) {
 				return;
 			}
 		}
-		if (tryLoadConf(new File(System.getProperty("user.dir"), File.separator + ENV_FILE))) {
+		if (tryLoadConf(new File(System.getProperty("user.dir"), File.separator + envFile))) {
 			return;
 		}
 	}
@@ -56,7 +60,13 @@ public class Envio {
 			Field theEnvironmentField = processEnvironmentClass.getDeclaredField("theEnvironment");
 			theEnvironmentField.setAccessible(true);
 			Map<String, String> env = (Map<String, String>) theEnvironmentField.get(null);
-			env.putAll(newEnv);
+			for (Entry<String, String> entry : newEnv.entrySet()) {
+				if (entry.getValue() == null) {
+					env.remove(entry.getKey());
+				} else {
+					env.put(entry.getKey(), entry.getValue());
+				}
+			}
 			Field theCaseInsensitiveEnvironmentField = processEnvironmentClass
 					.getDeclaredField("theCaseInsensitiveEnvironment");
 			theCaseInsensitiveEnvironmentField.setAccessible(true);
@@ -73,7 +83,11 @@ public class Envio {
 						Object obj = field.get(env);
 						Map<String, String> map = (Map<String, String>) obj;
 						for (Entry<String, String> entry : newEnv.entrySet()) {
-							map.put(entry.getKey(), entry.getValue());
+							if (entry.getValue() == null) {
+								map.remove(entry.getKey());
+							} else {
+								map.put(entry.getKey(), entry.getValue());
+							}
 						}
 					}
 				}

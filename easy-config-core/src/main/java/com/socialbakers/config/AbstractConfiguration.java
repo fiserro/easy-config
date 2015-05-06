@@ -13,6 +13,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -83,6 +84,10 @@ public abstract class AbstractConfiguration {
 	private Map<Integer, IParamDefinition> byOrder = new HashMap<Integer, IParamDefinition>();
 
 	protected boolean suspendValidation;
+	/*
+	 * TODO configurable
+	 */
+	private String multivalueSeparator = " ";
 
 	private Comparator<IParamDefinition> paramOrderComparator = new Comparator<IParamDefinition>() {
 		@Override
@@ -102,6 +107,10 @@ public abstract class AbstractConfiguration {
 			DUMP_OPTION));
 
 	protected AbstractConfiguration(String helpName, String helpDescription) {
+		this(helpName, helpDescription, Envio.ENV_FILE);
+	}
+
+	protected AbstractConfiguration(String helpName, String helpDescription, String enviFile) {
 
 		if (StringUtils.isNotBlank(helpName)) {
 			this.helpName = helpName;
@@ -113,7 +122,7 @@ public abstract class AbstractConfiguration {
 
 		this.confDefs = new ArrayList<IParamDefinition>();
 
-		Envio.loadConfiguration();
+		Envio.loadConfiguration(enviFile);
 	}
 
 	public void addResource(File file) {
@@ -184,6 +193,9 @@ public abstract class AbstractConfiguration {
 				confDef = byOption.get(PARAM_VALUE_SEPARATOR.option(arg));
 			} else {
 				confDef = byOrder.get(iPos++);
+				if (confDef == null) {
+					continue;
+				}
 				setValue(confDef, args[i], ConfigSource.ARG, source);
 				continue;
 			}
@@ -193,12 +205,28 @@ public abstract class AbstractConfiguration {
 			}
 
 			if (PARAM_VALUE_SEPARATOR.getValuePlace() == ParamValueSeparator.ValuePlace.NEXT_ARG
-					&& ++i >= args.length) {
+					&& (i + 1) >= args.length) {
 				throw new IllegalArgumentException("Missing value for argument: " + arg);
 			}
-
-			String value = PARAM_VALUE_SEPARATOR.getStringValue(args[i]);
-			setValue(confDef, value, ConfigSource.ARG, source);
+			PropertyDescriptor descriptor = getProperties().get(confDef);
+			if (PARAM_VALUE_SEPARATOR.getValuePlace() == ParamValueSeparator.ValuePlace.NEXT_ARG
+					&& descriptor.getPropertyType().isAssignableFrom(List.class)) {
+				String value = "";
+				while ((i + 1) < args.length && !PARAM_VALUE_SEPARATOR.matchName(args[i + 1])
+						&& !PARAM_VALUE_SEPARATOR.matchOption(args[i + 1])) {
+					if (StringUtils.isNotBlank(value)) {
+						value += " ";
+					}
+					value += args[i + 1];
+					i++;
+				}
+				setValue(confDef, value, ConfigSource.ARG, source);
+			} else {
+				if (PARAM_VALUE_SEPARATOR.getValuePlace() == ParamValueSeparator.ValuePlace.NEXT_ARG) {
+					i++;
+				}
+				setValue(confDef, PARAM_VALUE_SEPARATOR.getStringValue(args[i]), ConfigSource.ARG, source);
+			}
 		}
 	}
 
@@ -238,7 +266,7 @@ public abstract class AbstractConfiguration {
 		boolean valid;
 
 		try {
-			List<IParamDefinition> notSetRequiredParams = new ArrayList<IParamDefinition>();
+			Set<IParamDefinition> notSetRequiredParams = new LinkedHashSet<IParamDefinition>();
 			for (IParamDefinition confDef : byName.values()) {
 				if (!confDef.isRequired()) {
 					continue;
@@ -367,6 +395,41 @@ public abstract class AbstractConfiguration {
 		}
 	}
 
+	private Object instantiateValue(String stringValue, Class<?> type) {
+		Object value;
+		if (type.isAssignableFrom(String.class)) {
+			value = stringValue;
+		} else if (Integer.class.isAssignableFrom(type) || int.class.isAssignableFrom(type)) {
+			value = Integer.valueOf(stringValue);
+		} else if (Long.class.isAssignableFrom(type) || long.class.isAssignableFrom(type)) {
+			value = Long.valueOf(stringValue);
+		} else {
+			throw new ConfigurationException("Unsupported type " + type.getName());
+		}
+		return value;
+	}
+
+	private Object instantiateValue(String stringValue, IParamDefinition confDef) throws ClassNotFoundException {
+		PropertyDescriptor descriptor = getProperties().get(confDef);
+		Class<?> type = descriptor.getPropertyType();
+		if (type.isAssignableFrom(List.class)) {
+			if (StringUtils.isBlank(stringValue)) {
+				return Collections.emptyList();
+			}
+			String innerTypeName = confDef.getJavaType().replaceFirst("List<", "").replaceFirst(">", "");
+			if (!innerTypeName.startsWith("java.lang.")) {
+				innerTypeName = "java.lang." + innerTypeName;
+			}
+			type = Class.forName(innerTypeName);
+			List<Object> value = new ArrayList<Object>();
+			for (String sv : stringValue.split(multivalueSeparator)) {
+				value.add(instantiateValue(sv, type));
+			}
+			return value;
+		}
+		return instantiateValue(stringValue, type);
+	}
+
 	private void reloadFromEnvVars() {
 		for (IParamDefinition confDef : byEnv.values()) {
 			for (String env : confDef.getEnvs()) {
@@ -430,21 +493,8 @@ public abstract class AbstractConfiguration {
 	private void setValue(IParamDefinition confDef, String stringValue, ConfigSource sourceType, String source) {
 
 		try {
-
+			Object value = instantiateValue(stringValue, confDef);
 			PropertyDescriptor descriptor = getProperties().get(confDef);
-			Class<?> type = descriptor.getPropertyType();
-
-			Object value;
-			if (type.isAssignableFrom(String.class)) {
-				value = stringValue;
-			} else if (Integer.class.isAssignableFrom(type) || int.class.isAssignableFrom(type)) {
-				value = Integer.valueOf(stringValue);
-			} else if (Long.class.isAssignableFrom(type) || long.class.isAssignableFrom(type)) {
-				value = Long.valueOf(stringValue);
-			} else {
-				throw new ConfigurationException("Unsupported type " + type.getName());
-			}
-
 			Object previous = descriptor.getReadMethod().invoke(this);
 			if (previous == null || !previous.equals(value)) {
 				logger.info("Setting value '{}' of property '{}' from source {} '{}'", value, confDef.getName(),
