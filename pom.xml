@@ -41,8 +41,9 @@ TODO:
   </licenses>
 
   <scm>
-    <url>https://github.com/fiserro/easy-config.git</url>
-    <connection>scm:git:git://git@github.com:fiserro/easy-config.git</connection>
+    <url>scm:git:git@github.com:fiserro/easy-config.git</url>
+    <connection>scm:git:git@github.com:fiserro/easy-config.git</connection>
+    <developerConnection>scm:git:git@github.com:fiserro/easy-config.git</developerConnection>
   </scm>
 
   <developers>
