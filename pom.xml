@@ -42,7 +42,7 @@ TODO:
 
   <scm>
     <url>https://github.com/fiserro/easy-config.git</url>
-    <connection>scm:git:https://github.com/fiserro/easy-config.git</connection>
+    <connection>scm:git:git://git@github.com:fiserro/easy-config.git</connection>
   </scm>
 
   <developers>
