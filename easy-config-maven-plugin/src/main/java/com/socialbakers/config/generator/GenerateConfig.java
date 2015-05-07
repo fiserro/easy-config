@@ -70,8 +70,8 @@ public class GenerateConfig extends AbstractMojo {
 	@Parameter(defaultValue = "false")
 	private boolean alwaysReload;
 
-	@Parameter(defaultValue = "conf/")
-	private String confDirEnv = "conf/";
+	@Parameter(defaultValue = "CONF_DIR")
+	private String confDirEnv = "CONF_DIR";
 
 	@Parameter(defaultValue = "com.socialbakers.config.AbstractConfiguration")
 	private String superClass = "com.socialbakers.config.AbstractConfiguration";
