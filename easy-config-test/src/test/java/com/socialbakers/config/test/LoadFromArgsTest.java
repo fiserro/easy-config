@@ -12,15 +12,12 @@ public class LoadFromArgsTest {
 
 		BasicConf.PARAM_VALUE_SEPARATOR = ParamValueSeparator.EQUAL_SEPARATOR;
 
-		BasicConf config = new BasicConf(new String[] {
-				"80",
-				"zookeeper",
-				"-k=300" });
+		BasicConf config = BasicConf.create(new String[] { "80", "zookeeper", "-k=300" });
 		Assert.assertEquals(80, config.getPort().intValue());
 		Assert.assertEquals("zookeeper", config.getZookeeper());
 		Assert.assertEquals(300, config.getKeepAliveTime());
 
-		config = new BasicConf(new String[] { "-k=300", "80", "zookeeper" });
+		config = BasicConf.create(new String[] { "-k=300", "80", "zookeeper" });
 		Assert.assertEquals(80, config.getPort().intValue());
 		Assert.assertEquals("zookeeper", config.getZookeeper());
 		Assert.assertEquals(300, config.getKeepAliveTime());
@@ -31,17 +28,17 @@ public class LoadFromArgsTest {
 		// space separator
 		BasicConf.PARAM_VALUE_SEPARATOR = ParamValueSeparator.SPACE_SEPARATOR;
 
-		BasicConf config = new BasicConf(new String[] { "80", "zookeeper", "-k", "300" });
+		BasicConf config = BasicConf.create(new String[] { "80", "zookeeper", "-k", "300" });
 		Assert.assertEquals(80, config.getPort().intValue());
 		Assert.assertEquals("zookeeper", config.getZookeeper());
 		Assert.assertEquals(300, config.getKeepAliveTime());
 
-		config = new BasicConf(new String[] { "-k", "300", "80", "zookeeper" });
+		config = BasicConf.create(new String[] { "-k", "300", "80", "zookeeper" });
 		Assert.assertEquals(80, config.getPort().intValue());
 		Assert.assertEquals("zookeeper", config.getZookeeper());
 		Assert.assertEquals(300, config.getKeepAliveTime());
 
-		config = new BasicConf(new String[] { "80", "--keepAliveTime", "300", "zookeeper" });
+		config = BasicConf.create(new String[] { "80", "--keepAliveTime", "300", "zookeeper" });
 		Assert.assertEquals(80, config.getPort().intValue());
 		Assert.assertEquals("zookeeper", config.getZookeeper());
 		Assert.assertEquals(300, config.getKeepAliveTime());

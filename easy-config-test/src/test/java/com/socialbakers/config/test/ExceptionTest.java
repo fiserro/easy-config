@@ -21,7 +21,7 @@ public class ExceptionTest {
 				Envio.setEnv(zkEnv, null);
 			}
 			Envio.setEnv(BasicConf.Def.port.getEnv(), null);
-			new BasicConf(new String[0]);
+			BasicConf.create(new String[0]);
 		} catch (ConfigurationException e) {
 			assertThat(e.getMessage(), startsWith("You must pass/set at least 2 parameters: <port> <zookeeper>"));
 			throw e;
@@ -30,12 +30,12 @@ public class ExceptionTest {
 
 	@Test(expected = DumpException.class)
 	public void shouldThrowDumpException() {
-		new BasicConf(new String[] { "-dump" });
+		BasicConf.create(new String[] { "-dump" });
 	}
 
 	@Test(expected = HelpException.class)
 	public void shouldThrowHelpException() {
-		new BasicConf(new String[] { "-help" });
+		BasicConf.create(new String[] { "-help" });
 	}
 
 }

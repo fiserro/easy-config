@@ -106,13 +106,15 @@ public class GenerateConfig extends AbstractMojo {
 
 		try {
 			Set<String> imports = new LinkedHashSet<String>();
-			imports.add("import com.socialbakers.config.IParamDefinition;");
-			imports.add("import com.socialbakers.config.ParamValueSeparator;");
+			imports.add("java.util.Collection");
+			imports.add("java.util.Arrays");
+			imports.add("com.socialbakers.config.IParamDefinition");
+			imports.add("com.socialbakers.config.ParamValueSeparator");
 			for (ParamDefinition param : params) {
 				getLog().info("Adding param: " + param.getName());
 				iParams.put(param.getName(), param);
 				if (param.getJavaType().matches(LIST_JAVA_TYPE_PATTERN)) {
-					imports.add("import java.util.List;");
+					imports.add("java.util.List");
 					param.setJavaType(param.getJavaType().replaceFirst("\\(", "<").replaceFirst("\\)", ">"));
 				}
 			}

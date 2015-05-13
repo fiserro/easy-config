@@ -1,7 +1,7 @@
 package ${package};
 
 <#list imports as i>
-${i}
+import ${i};
 </#list>
 
 /**
@@ -24,17 +24,24 @@ public <#if abstract>abstract </#if>class ${className} extends ${superClass} {
 	private ${param.javaType} ${param.getJavaName()}<#if param.defaultValue??> = ${x0}${param.defaultValue}${x1}</#if>;
 </#list>
 	
-	//protected ${className}(String helpName, String helpDescription) {
-	//	super(helpName, helpDescription);
-	//}
+	public static ${className} create(String[] args) {
+		${className} conf = new ${className}(args);
+		conf.reload();
+		return conf;
+	}
 	
-	public ${className}(String[] args) {
-		super("${helpName}", "${helpDescription}", "${envFile}");
-		addDef(Def.values());
+	protected ${className}(String[] args) {
+		super(args);
+		setHelpName("${helpName}");
+		setHelpDescription("${helpDescription}");
+		setEnvFile("${envFile}");
 		<#if genXml>addResource("${configFileDefault}");
 		addResource("${configFileSite}");</#if>
-		setArgs(args);
-		reload();
+	}
+	
+	@Override
+	protected Collection<IParamDefinition> knownParams() {
+		return Arrays.<IParamDefinition> asList(Def.values());
 	}
 	
 <#list params as param>

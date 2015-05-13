@@ -13,7 +13,7 @@ public class LoadFromEnvTest {
 	public void testLoadDevEnv() {
 
 		Envio.setEnv(TEST_CONF_DIR_ENV, "src/test/resources/test/env/dev");
-		BasicConf config = new BasicConf(new String[0]);
+		BasicConf config = BasicConf.create(new String[0]);
 
 		Assert.assertEquals(1, config.getKeepAliveTime());
 		Assert.assertEquals("dev.connection.string", config.getZookeeper());
@@ -24,7 +24,7 @@ public class LoadFromEnvTest {
 	public void testLoadProductionEnv() {
 
 		Envio.setEnv(TEST_CONF_DIR_ENV, "src/test/resources/test/env/production");
-		BasicConf config = new BasicConf(new String[0]);
+		BasicConf config = BasicConf.create(new String[0]);
 
 		Assert.assertEquals(60000, config.getKeepAliveTime());
 		Assert.assertEquals("zk", config.getZookeeper());

@@ -73,15 +73,18 @@ public abstract class AbstractConfiguration {
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 	private List<Object> resources = new ArrayList<Object>();
 	private String[] args = new String[0];
-	private String helpName = "app-name";
 
+	private String helpName = "app-name";
 	private String helpDescription = "";
+	private String envFile;
+
 	private List<IParamDefinition> confDefs;
 	private Map<IParamDefinition, PropertyDescriptor> properties;
 	private Map<String, IParamDefinition> byName = new HashMap<String, IParamDefinition>();
 	private Map<String, IParamDefinition> byEnv = new HashMap<String, IParamDefinition>();
 	private Map<String, IParamDefinition> byOption = new HashMap<String, IParamDefinition>();
 	private Map<Integer, IParamDefinition> byOrder = new HashMap<Integer, IParamDefinition>();
+	private boolean initLoad;
 
 	protected boolean suspendValidation;
 	/*
@@ -106,35 +109,10 @@ public abstract class AbstractConfiguration {
 	private static final Set<String> SKIP_ARGS = new HashSet<String>(Arrays.asList(HELP_NAME, HELP_OPTION, DUMP_NAME,
 			DUMP_OPTION));
 
-	protected AbstractConfiguration(String helpName, String helpDescription) {
-		this(helpName, helpDescription, Envio.ENV_FILE);
-	}
-
-	protected AbstractConfiguration(String helpName, String helpDescription, String enviFile) {
-
-		if (StringUtils.isNotBlank(helpName)) {
-			this.helpName = helpName;
-		}
-
-		if (StringUtils.isNotBlank(helpDescription)) {
-			this.helpDescription = helpDescription;
-		}
-
+	public AbstractConfiguration(String[] args) {
+		this.args = args;
 		this.confDefs = new ArrayList<IParamDefinition>();
-
-		Envio.loadConfiguration(enviFile);
-	}
-
-	public void addResource(File file) {
-		resources.add(file);
-	}
-
-	public void addResource(String filename) {
-		resources.add(filename);
-	}
-
-	protected void addDef(IParamDefinition... def) {
-		confDefs.addAll(Arrays.asList(def));
+		confDefs.addAll(knownParams());
 		Collections.sort(this.confDefs, paramOrderComparator);
 
 		for (IParamDefinition confDef : this.confDefs) {
@@ -156,7 +134,32 @@ public abstract class AbstractConfiguration {
 		}
 	}
 
+	public void addResource(File file) {
+		resources.add(file);
+	}
+
+	public void addResource(String filename) {
+		resources.add(filename);
+	}
+
+	protected String getEnvFile() {
+		return envFile;
+	}
+
+	protected String getHelpDescription() {
+		return helpDescription;
+	}
+
+	protected String getHelpName() {
+		return helpName;
+	}
+
+	protected abstract Collection<IParamDefinition> knownParams();
+
 	protected void reload() {
+		if (!initLoad) {
+			Envio.loadConfiguration(envFile);
+		}
 		boolean alwaysReload = ALWAYS_RELOAD;
 		ALWAYS_RELOAD = false;
 		try {
@@ -170,89 +173,26 @@ public abstract class AbstractConfiguration {
 			throw new ConfigurationException(e + "\n" + helpMsg());
 		} finally {
 			ALWAYS_RELOAD = alwaysReload;
+			initLoad = true;
 		}
 	}
 
-	protected void reloadFromArgs() {
-
-		int iPos = 0;
-
-		for (int i = 0; i < args.length; i++) {
-
-			if (SKIP_ARGS.contains(args[i])) {
-				continue;
-			}
-
-			String arg = args[i];
-			IParamDefinition confDef;
-			String source = arg;
-
-			if (PARAM_VALUE_SEPARATOR.matchName(arg)) {
-				confDef = byName.get(PARAM_VALUE_SEPARATOR.name(arg));
-			} else if (PARAM_VALUE_SEPARATOR.matchOption(arg)) {
-				confDef = byOption.get(PARAM_VALUE_SEPARATOR.option(arg));
-			} else {
-				confDef = byOrder.get(iPos++);
-				if (confDef == null) {
-					continue;
-				}
-				setValue(confDef, args[i], ConfigSource.ARG, source);
-				continue;
-			}
-
-			if (confDef == null) {
-				throw new IllegalArgumentException("Invalid argument: " + arg);
-			}
-
-			if (PARAM_VALUE_SEPARATOR.getValuePlace() == ParamValueSeparator.ValuePlace.NEXT_ARG
-					&& (i + 1) >= args.length) {
-				throw new IllegalArgumentException("Missing value for argument: " + arg);
-			}
-			PropertyDescriptor descriptor = getProperties().get(confDef);
-			if (PARAM_VALUE_SEPARATOR.getValuePlace() == ParamValueSeparator.ValuePlace.NEXT_ARG
-					&& descriptor.getPropertyType().isAssignableFrom(List.class)) {
-				String value = "";
-				while ((i + 1) < args.length && !PARAM_VALUE_SEPARATOR.matchName(args[i + 1])
-						&& !PARAM_VALUE_SEPARATOR.matchOption(args[i + 1])) {
-					if (StringUtils.isNotBlank(value)) {
-						value += " ";
-					}
-					value += args[i + 1];
-					i++;
-				}
-				setValue(confDef, value, ConfigSource.ARG, source);
-			} else {
-				if (PARAM_VALUE_SEPARATOR.getValuePlace() == ParamValueSeparator.ValuePlace.NEXT_ARG) {
-					i++;
-				}
-				setValue(confDef, PARAM_VALUE_SEPARATOR.getStringValue(args[i]), ConfigSource.ARG, source);
-			}
+	protected void reloadIfNecessary() {
+		if (ALWAYS_RELOAD || !initLoad) {
+			reload();
 		}
 	}
 
-	protected void setArgs(String... args) {
+	protected void setEnvFile(String envFile) {
+		this.envFile = envFile;
+	}
 
-		this.args = args;
+	protected void setHelpDescription(String helpDescription) {
+		this.helpDescription = helpDescription;
+	}
 
-		for (String arg : args) {
-			Preconditions.checkNotNull(arg);
-			if (arg.startsWith(HELP_NAME) || arg.startsWith(HELP_OPTION)) {
-				String msg;
-				msg = helpMsg();
-				throw new HelpException(msg);
-			}
-			if (arg.startsWith(DUMP_NAME) || arg.startsWith(DUMP_OPTION)) {
-				String msg;
-				suspendValidation = true;
-				reload();
-				try {
-					msg = dump();
-				} catch (Exception e) {
-					msg = e.getMessage();
-				}
-				throw new DumpException(msg);
-			}
-		}
+	protected void setHelpName(String helpName) {
+		this.helpName = helpName;
 	}
 
 	protected void validate() {
@@ -371,8 +311,8 @@ public abstract class AbstractConfiguration {
 			Template helpTemplate = cfg.getTemplate("help.ftl");
 
 			Map<String, Object> input = new HashMap<String, Object>();
-			input.put("name", helpName);
-			input.put("description", helpDescription);
+			input.put("name", getHelpName());
+			input.put("description", getHelpDescription());
 			input.put("usage", usage(confDefs));
 			input.put("params", confDefs);
 			input.put("helpName", HELP_NAME);
@@ -428,6 +368,89 @@ public abstract class AbstractConfiguration {
 			return value;
 		}
 		return instantiateValue(stringValue, type);
+	}
+
+	private boolean isDumpArg(String arg) {
+		return arg.startsWith(DUMP_NAME) || arg.startsWith(DUMP_OPTION);
+	}
+
+	private boolean isHelpArg(String arg) {
+		return arg.startsWith(HELP_NAME) || arg.startsWith(HELP_OPTION);
+	}
+
+	private void reloadFromArgs() {
+
+		int iPos = 0;
+
+		for (int i = 0; i < args.length; i++) {
+
+			if (SKIP_ARGS.contains(args[i])) {
+				continue;
+			}
+
+			String arg = args[i];
+			IParamDefinition confDef;
+			String source = arg;
+
+			if (PARAM_VALUE_SEPARATOR.matchName(arg)) {
+				confDef = byName.get(PARAM_VALUE_SEPARATOR.name(arg));
+			} else if (PARAM_VALUE_SEPARATOR.matchOption(arg)) {
+				confDef = byOption.get(PARAM_VALUE_SEPARATOR.option(arg));
+			} else {
+				confDef = byOrder.get(iPos++);
+				if (confDef == null) {
+					continue;
+				}
+				setValue(confDef, args[i], ConfigSource.ARG, source);
+				continue;
+			}
+
+			if (confDef == null) {
+				throw new IllegalArgumentException("Invalid argument: " + arg);
+			}
+
+			if (PARAM_VALUE_SEPARATOR.getValuePlace() == ParamValueSeparator.ValuePlace.NEXT_ARG
+					&& (i + 1) >= args.length) {
+				throw new IllegalArgumentException("Missing value for argument: " + arg);
+			}
+			PropertyDescriptor descriptor = getProperties().get(confDef);
+			if (PARAM_VALUE_SEPARATOR.getValuePlace() == ParamValueSeparator.ValuePlace.NEXT_ARG
+					&& descriptor.getPropertyType().isAssignableFrom(List.class)) {
+				String value = "";
+				while ((i + 1) < args.length && !PARAM_VALUE_SEPARATOR.matchName(args[i + 1])
+						&& !PARAM_VALUE_SEPARATOR.matchOption(args[i + 1])) {
+					if (StringUtils.isNotBlank(value)) {
+						value += " ";
+					}
+					value += args[i + 1];
+					i++;
+				}
+				setValue(confDef, value, ConfigSource.ARG, source);
+			} else {
+				if (PARAM_VALUE_SEPARATOR.getValuePlace() == ParamValueSeparator.ValuePlace.NEXT_ARG) {
+					i++;
+				}
+				setValue(confDef, PARAM_VALUE_SEPARATOR.getStringValue(args[i]), ConfigSource.ARG, source);
+			}
+		}
+
+		for (String arg : args) {
+			Preconditions.checkNotNull(arg);
+			if (isHelpArg(arg)) {
+				String msg;
+				msg = helpMsg();
+				throw new HelpException(msg);
+			} else if (isDumpArg(arg)) {
+				String msg;
+				suspendValidation = true;
+				try {
+					msg = dump();
+				} catch (Exception e) {
+					msg = e.getMessage();
+				}
+				throw new DumpException(msg);
+			}
+		}
 	}
 
 	private void reloadFromEnvVars() {

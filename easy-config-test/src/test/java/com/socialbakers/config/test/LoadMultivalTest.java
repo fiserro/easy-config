@@ -12,7 +12,7 @@ public class LoadMultivalTest {
 
 	@Test
 	public void testLoadArgs() {
-		MultivalConf config = new MultivalConf(new String[] {
+		MultivalConf config = MultivalConf.create(new String[] {
 				"--input.files", "input1", "input2", "input3",
 				"--operations", "10", "20", "30",
 				"--output.file", "outputFile"
@@ -27,7 +27,7 @@ public class LoadMultivalTest {
 	public void testLoadDevEnv() {
 
 		Envio.setEnv(LoadFromEnvTest.TEST_CONF_DIR_ENV, "src/test/resources/test/env/dev");
-		MultivalConf config = new MultivalConf(new String[0]);
+		MultivalConf config = MultivalConf.create(new String[0]);
 
 		assertThat(config.getInput_files(), hasItems("file1", "file2", "file3"));
 		assertThat(config.getOperations(), hasItems(1, 2, 3));
