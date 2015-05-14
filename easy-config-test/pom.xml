@@ -121,7 +121,67 @@
             </configuration>
           </execution>
 
+          <execution>
+            <id>generate-parent</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>generate-config</goal>
+            </goals>
+            <configuration>
+              <configClass>com.socialbakers.config.test.AbstractParentConf</configClass>
+              <abstr>true</abstr>
+              <envFile>env</envFile>
+              <confDirEnv>TEST_CONF_DIR_ENV</confDirEnv>
+              <params>
+                <param>
+                  <name>input.files</name>
+                  <option>i</option>
+                  <env>INPUT_FILES</env>
+                  <description>List of files(space separated filenames)</description>
+                  <javaType>List(String)</javaType>
+                </param>
+              </params>
+            </configuration>
+          </execution>
+
+          <execution>
+            <id>generate-inherited</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>generate-config</goal>
+            </goals>
+            <configuration>
+              <configClass>com.socialbakers.config.test.InheritedConf</configClass>
+              <superClass>com.socialbakers.config.test.AbstractParentConf</superClass>
+              <envFile>env</envFile>
+              <confDirEnv>TEST_CONF_DIR_ENV</confDirEnv>
+              <params>
+                <param>
+                  <name>input.files</name>
+                  <env>INPUT_FILES_X</env>
+                  <description>Overriden description</description>
+                  <javaType>List(String)</javaType>
+                </param>
+                <param>
+                  <name>number</name>
+                  <option>n</option>
+                  <env>NUMBER</env>
+                  <description>Number</description>
+                  <javaType>int</javaType>
+                </param>
+              </params>
+            </configuration>
+          </execution>
         </executions>
+
+        <dependencies>
+          <dependency>
+            <groupId>com.socialbakers.easy-config</groupId>
+            <artifactId>easy-config-core</artifactId>
+            <version>${project.version}</version>
+          </dependency>
+        </dependencies>
+
       </plugin>
 
       <plugin>

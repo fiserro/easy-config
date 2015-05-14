@@ -23,5 +23,7 @@ public interface IParamDefinition {
 
 	Integer getOrder();
 
+	boolean hasMoreEnvs();
+
 	boolean isRequired();
 }

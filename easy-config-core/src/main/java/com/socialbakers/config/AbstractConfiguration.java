@@ -154,7 +154,9 @@ public abstract class AbstractConfiguration {
 		return helpName;
 	}
 
-	protected abstract Collection<IParamDefinition> knownParams();
+	protected Collection<IParamDefinition> knownParams() {
+		return Collections.emptyList();
+	}
 
 	protected void reload() {
 		if (!initLoad) {

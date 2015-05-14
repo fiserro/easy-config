@@ -3,6 +3,9 @@ package com.socialbakers.config.generator;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.Writer;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -14,6 +17,8 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.tools.ToolProvider;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -23,6 +28,7 @@ import org.apache.maven.plugins.annotations.Parameter;
 import com.google.common.base.Preconditions;
 import com.socialbakers.config.AbstractConfiguration;
 import com.socialbakers.config.IParamDefinition;
+import com.socialbakers.config.ParamDefinition;
 import com.socialbakers.config.ParamValueSeparator;
 
 import freemarker.template.Configuration;
@@ -110,6 +116,7 @@ public class GenerateConfig extends AbstractMojo {
 			imports.add("java.util.Arrays");
 			imports.add("com.socialbakers.config.IParamDefinition");
 			imports.add("com.socialbakers.config.ParamValueSeparator");
+			imports.add("com.socialbakers.config.ParamDefinition");
 			for (ParamDefinition param : params) {
 				getLog().info("Adding param: " + param.getName());
 				iParams.put(param.getName(), param);
@@ -278,11 +285,55 @@ public class GenerateConfig extends AbstractMojo {
 		}
 	}
 
+	private URLClassLoader createOutputDirClassLoader() throws MalformedURLException {
+		return URLClassLoader.newInstance(new URL[] { outputDir.toURI().toURL() }, getCurrentClassLoader());
+	}
+
+	private ClassLoader getCurrentClassLoader() {
+		return getClass().getClassLoader();
+	}
+
+	private String getCurrentClassPath() {
+		StringBuilder classpath = new StringBuilder();
+		for (URL url : ((URLClassLoader) getCurrentClassLoader()).getURLs()) {
+			classpath.append(url.getFile());
+			classpath.append(":");
+		}
+		classpath.append(".");
+		return classpath.toString();
+	}
+
+	private File getSuperClassFile() {
+		String superPackage = superClass.substring(0, superClass.lastIndexOf('.'));
+		String superClassName = superClass.substring(superClass.lastIndexOf('.') + 1, superClass.length());
+		File dir = new File(outputDir, superPackage.replaceAll("\\.", "/"));
+		File file = new File(dir, superClassName + ".java");
+		return file;
+	}
+
+	private String getSuperClassFilePath() {
+		return getSuperClassFile().getPath();
+	}
+
 	private void loadSuperParams() {
 		try {
 			recLoadSuperParams(Class.forName(superClass));
 		} catch (ClassNotFoundException e) {
-			throw new IllegalStateException(e);
+			if (getSuperClassFile().exists()) {
+				try {
+					ToolProvider.getSystemJavaCompiler().run(null, null, null, "-cp", getCurrentClassPath(), getSuperClassFilePath());
+				} catch (Exception e1) {
+					throw new IllegalStateException("Can't compile '" + getSuperClassFile()
+							+ "' make suer you're using JDK instead of JRE. Or some dependencies maybe missing. " + e1.getMessage(), e1);
+				}
+				try {
+					recLoadSuperParams(Class.forName(superClass, true, createOutputDirClassLoader()));
+				} catch (Exception e1) {
+					throw new IllegalStateException(e1);
+				}
+			} else {
+				throw new IllegalStateException("'" + getSuperClassFilePath() + "' does not exists.", e);
+			}
 		}
 	}
 
@@ -302,6 +353,9 @@ public class GenerateConfig extends AbstractMojo {
 				if (!iParams.containsKey(param.getName())) {
 					getLog().info("Addind param from superClass:" + class1 + "." + param.getName());
 					iParams.put(param.getName(), param);
+				} else {
+					getLog().info("Merging param from superClass:" + class1 + "." + param.getName());
+					iParams.put(param.getName(), ParamDefinition.merge(iParams.get(param.getName()), param));
 				}
 			}
 		}

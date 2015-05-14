@@ -15,6 +15,10 @@ public <#if abstract>abstract </#if>class ${className} extends ${superClass} {
 	}
 
 <#list params as param>
+	public static final IParamDefinition _${param.getJavaName()?upper_case} = Def.${param.getJavaName()};
+</#list>
+
+<#list params as param>
 	<#assign x0 = "">
 	<#assign x1 = "">
 	<#if param.javaType=="String" && param.defaultValue?? && param.defaultValue!="null">
@@ -24,12 +28,23 @@ public <#if abstract>abstract </#if>class ${className} extends ${superClass} {
 	private ${param.javaType} ${param.getJavaName()}<#if param.defaultValue??> = ${x0}${param.defaultValue}${x1}</#if>;
 </#list>
 	
-	public static ${className} create(String[] args) {
+<#if abstract == false>
+	public static ${className} create(String... args) {
 		${className} conf = new ${className}(args);
 		conf.reload();
 		return conf;
 	}
 	
+	/**
+	 * This constructor is for internal and inherit use only.
+	 * @deprecated Do not use this constructor. Use {@link ${className}#create(String...)} instead.
+	 */
+	@Deprecated
+<#else>
+  /**
+   * You should call a {@link ${className}#reload()} method after.
+   */
+</#if>
 	protected ${className}(String[] args) {
 		super(args);
 		setHelpName("${helpName}");
@@ -41,7 +56,7 @@ public <#if abstract>abstract </#if>class ${className} extends ${superClass} {
 	
 	@Override
 	protected Collection<IParamDefinition> knownParams() {
-		return Arrays.<IParamDefinition> asList(Def.values());
+		return ParamDefinition.merge(Arrays.<IParamDefinition> asList(Def.values()), super.knownParams());
 	}
 	
 <#list params as param>
@@ -61,7 +76,7 @@ public <#if abstract>abstract </#if>class ${className} extends ${superClass} {
 	
 </#list>
 
-	public enum Def implements IParamDefinition {
+	public static enum Def implements IParamDefinition {
 	
 <#list params as param>
 	<#assign name = param.getJavaName()>
@@ -147,6 +162,11 @@ public <#if abstract>abstract </#if>class ${className} extends ${superClass} {
 		public String getJavaType() {
 			return javaType;
 		}
-	}	
+
+    @Override
+    public boolean hasMoreEnvs() {
+      return getEnvs().length > 1;
+    }
+	}
 
 }
