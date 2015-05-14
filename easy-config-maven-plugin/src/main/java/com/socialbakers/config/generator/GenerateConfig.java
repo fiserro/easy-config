@@ -100,8 +100,8 @@ public class GenerateConfig extends AbstractMojo {
 	private static final String START_WITH_NUMBER = "[0-9].*";
 
 	private static final Set<String> RESERVED_WORDS = new HashSet<String>(Arrays.asList(IParamDefinition.HELP,
-			IParamDefinition.DUMP, "desc", "env",
-			"option", "order", "required", "defaultValue", "javaType", "paramName"));
+			IParamDefinition.DUMP, "desc", "env", "envs",
+			"option", "order", "required", "defaultValue", "javaType", "paramName", "helpName", "helpDescription"));
 
 	private static String LIST_JAVA_TYPE_PATTERN = "List\\([A-Z][a-z]+\\)";
 

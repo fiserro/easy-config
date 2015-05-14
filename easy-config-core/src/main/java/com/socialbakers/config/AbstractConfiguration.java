@@ -142,16 +142,16 @@ public abstract class AbstractConfiguration {
 		resources.add(filename);
 	}
 
-	protected String getEnvFile() {
-		return envFile;
-	}
-
-	protected String getHelpDescription() {
+	public String getHelpDescription() {
 		return helpDescription;
 	}
 
-	protected String getHelpName() {
+	public String getHelpName() {
 		return helpName;
+	}
+
+	protected String getEnvFile() {
+		return envFile;
 	}
 
 	protected Collection<IParamDefinition> knownParams() {
