@@ -46,7 +46,7 @@ public class GenerateConfig extends AbstractMojo {
 	@Parameter(required = true)
 	private List<ParamDefinition> params;
 
-	@Parameter(alias = "outputDir")
+	@Parameter(alias = "outputDir", defaultValue = "${project.build.directory}/generated-sources/")
 	private String outputDirName;
 
 	@Parameter(required = true)
