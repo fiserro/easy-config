@@ -150,8 +150,22 @@ public abstract class AbstractConfiguration {
 		return helpName;
 	}
 
+	protected PropertyDescriptor getDescriptor(IParamDefinition confDef) {
+		PropertyDescriptor descriptor = getProperties().get(confDef);
+		Preconditions.checkNotNull(descriptor, "Property '" + confDef + "' not found");
+		return descriptor;
+	}
+
 	protected String getEnvFile() {
 		return envFile;
+	}
+
+	protected Object getValue(IParamDefinition confDef) {
+		try {
+			return getDescriptor(confDef).getReadMethod().invoke(this);
+		} catch (Exception e) {
+			throw new ConfigurationException(e);
+		}
 	}
 
 	protected Collection<IParamDefinition> knownParams() {
@@ -195,6 +209,27 @@ public abstract class AbstractConfiguration {
 
 	protected void setHelpName(String helpName) {
 		this.helpName = helpName;
+	}
+
+	protected void setValue(IParamDefinition confDef, String stringValue, ConfigSource sourceType, String source) {
+
+		try {
+			Object value = instantiateValue(stringValue, confDef);
+			PropertyDescriptor descriptor = getDescriptor(confDef);
+			Object previous = descriptor.getReadMethod().invoke(this);
+			if (previous == null || !previous.equals(value)) {
+				logger.info("Setting value '{}' of property '{}' from source {} '{}'", value, confDef.getName(),
+						sourceType, source);
+			}
+
+			boolean hold = suspendValidation;
+			suspendValidation = true;
+			descriptor.getWriteMethod().invoke(this, value);
+			suspendValidation = hold;
+
+		} catch (Exception e) {
+			throw new ConfigurationException(e);
+		}
 	}
 
 	protected void validate() {
@@ -512,27 +547,6 @@ public abstract class AbstractConfiguration {
 			} catch (Exception e) {
 				throw new ConfigurationException(e);
 			}
-		}
-	}
-
-	private void setValue(IParamDefinition confDef, String stringValue, ConfigSource sourceType, String source) {
-
-		try {
-			Object value = instantiateValue(stringValue, confDef);
-			PropertyDescriptor descriptor = getProperties().get(confDef);
-			Object previous = descriptor.getReadMethod().invoke(this);
-			if (previous == null || !previous.equals(value)) {
-				logger.info("Setting value '{}' of property '{}' from source {} '{}'", value, confDef.getName(),
-						sourceType, source);
-			}
-
-			boolean hold = suspendValidation;
-			suspendValidation = true;
-			descriptor.getWriteMethod().invoke(this, value);
-			suspendValidation = hold;
-
-		} catch (Exception e) {
-			throw new ConfigurationException(e);
 		}
 	}
 
