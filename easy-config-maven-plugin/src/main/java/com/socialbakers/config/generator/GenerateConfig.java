@@ -6,6 +6,7 @@ import java.io.Writer;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -19,6 +20,7 @@ import java.util.regex.Pattern;
 
 import javax.tools.ToolProvider;
 
+import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -45,6 +47,9 @@ public class GenerateConfig extends AbstractMojo {
 
 	@Parameter(required = true)
 	private List<ParamDefinition> params;
+
+	@Parameter
+	private List<Multiplier> multipliers = new ArrayList<Multiplier>();
 
 	@Parameter(alias = "outputDir", defaultValue = "${project.build.directory}/generated-sources/")
 	private String outputDirName;
@@ -117,12 +122,21 @@ public class GenerateConfig extends AbstractMojo {
 			imports.add("com.socialbakers.config.IParamDefinition");
 			imports.add("com.socialbakers.config.ParamValueSeparator");
 			imports.add("com.socialbakers.config.ParamDefinition");
+
 			for (ParamDefinition param : params) {
-				getLog().info("Adding param: " + param.getName());
-				iParams.put(param.getName(), param);
-				if (param.getJavaType().matches(LIST_JAVA_TYPE_PATTERN)) {
-					imports.add("java.util.List");
-					param.setJavaType(param.getJavaType().replaceFirst("\\(", "<").replaceFirst("\\)", ">"));
+				if ((param.getEnv() != null && param.getEnv().indexOf("@{env}") > -1)
+						|| (param.getName() != null && param.getName().indexOf("@{name}") > -1)) {
+					for (Multiplier multiplier : multipliers) {
+						ParamDefinition mParam = new ParamDefinition();
+						BeanUtils.copyProperties(mParam, param);
+						mParam.setName(param.getName().replaceFirst("@\\{name\\}", multiplier.getName()));
+						if (param.getEnv() != null) {
+							mParam.setEnv(param.getEnv().replaceAll("@\\{env\\}", multiplier.getEnv()));
+						}
+						addParam(imports, mParam);
+					}
+				} else {
+					addParam(imports, param);
 				}
 			}
 			validate();
@@ -197,6 +211,15 @@ public class GenerateConfig extends AbstractMojo {
 
 		} catch (Exception e) {
 			throw new MojoExecutionException(e.getMessage(), e);
+		}
+	}
+
+	private void addParam(Set<String> imports, ParamDefinition param) {
+		getLog().info("Adding param: " + param.getName());
+		iParams.put(param.getName(), param);
+		if (param.getJavaType().matches(LIST_JAVA_TYPE_PATTERN)) {
+			imports.add("java.util.List");
+			param.setJavaType(param.getJavaType().replaceFirst("\\(", "<").replaceFirst("\\)", ">"));
 		}
 	}
 

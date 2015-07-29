@@ -7,7 +7,7 @@
   <parent>
     <groupId>com.socialbakers.easy-config</groupId>
     <artifactId>easy-config</artifactId>
-    <version>0.5.4-SNAPSHOT</version>
+    <version>0.5.5-SNAPSHOT</version>
   </parent>
 
   <properties>
@@ -79,6 +79,51 @@
                   <description>Time in millisecond to keep alive idle connection thread</description>
                   <javaType>int</javaType>
                   <defaultValue>60000</defaultValue>
+                </param>
+              </params>
+            </configuration>
+          </execution>
+
+          <execution>
+            <id>generate-multiplied</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>generate-config</goal>
+            </goals>
+            <configuration>
+              <configClass>com.socialbakers.config.test.MultipliedConf</configClass>
+              <confDirEnv>TEST_CONF_DIR_ENV</confDirEnv>
+              <multipliers>
+                <multiplier>
+                  <name>facebook</name>
+                  <env>FACEBOOK</env>
+                </multiplier>
+                <multiplier>
+                  <name>twitter</name>
+                  <env>TWITTER</env>
+                </multiplier>
+              </multipliers>
+              <params>
+                <param>
+                  <name>zkElasticSharder</name>
+                  <option>z</option>
+                  <env>ZK_ELASTIC_SHARDER</env>
+                  <description>Zookeeper quorum connection string</description>
+                  <javaType>String</javaType>
+                  <required>true</required>
+                </param>
+                <param>
+                  <name>@{name}.zkNodePath</name>
+                  <env>ZK_NODE_PATH_@{env}</env>
+                  <description>Node path to twitter index distribution map. Example: '/root/path1/../pathN/node_name|index_prefix'.
+                    That means the last part of path is also the node name and index prefix.</description>
+                  <javaType>String</javaType>
+                </param>
+                <param>
+                  <name>@{name}.esCluster</name>
+                  <env>ES_CLUSTER_NAME_@{env}</env>
+                  <description>Elasticsearch cluster name</description>
+                  <javaType>String</javaType>
                 </param>
               </params>
             </configuration>
