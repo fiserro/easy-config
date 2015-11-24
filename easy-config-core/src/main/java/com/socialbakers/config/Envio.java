@@ -6,6 +6,7 @@ import java.io.FileReader;
 import java.lang.reflect.Field;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -41,7 +42,13 @@ public class Envio {
 	public static void setEnv(String name, String value) {
 		HashMap<String, String> newEnv = new HashMap<String, String>();
 		newEnv.put(name, value);
-		setEnv(newEnv);
+		setEnv(newEnv, true);
+	}
+
+	public static void setEnvIfMissing(String name, String value) {
+		HashMap<String, String> newEnv = new HashMap<String, String>();
+		newEnv.put(name, value);
+		setEnv(newEnv, false);
 	}
 
 	public static String[] splitEnvNames(String env) {
@@ -54,7 +61,24 @@ public class Envio {
 	/**
 	 * code from http://stackoverflow.com/a/7201825
 	 */
-	private static void setEnv(Map<String, String> newEnv) {
+	private static void setEnv(Map<String, String> newEnv, boolean overwrite) {
+
+		for (Entry<String, String> entry : newEnv.entrySet()) {
+			if (overwrite || System.getProperty(entry.getKey()) != null) {
+				System.setProperty(entry.getKey(), entry.getValue());
+			}
+		}
+
+		if (!overwrite) {
+			Iterator<Entry<String, String>> iterator = newEnv.entrySet().iterator();
+			while (iterator.hasNext()) {
+				Entry<String, String> next = iterator.next();
+				if (System.getenv(next.getKey()) != null) {
+					iterator.remove();
+				}
+			}
+		}
+
 		try {
 			Class<?> processEnvironmentClass = Class.forName("java.lang.ProcessEnvironment");
 			Field theEnvironmentField = processEnvironmentClass.getDeclaredField("theEnvironment");
@@ -67,8 +91,7 @@ public class Envio {
 					env.put(entry.getKey(), entry.getValue());
 				}
 			}
-			Field theCaseInsensitiveEnvironmentField = processEnvironmentClass
-					.getDeclaredField("theCaseInsensitiveEnvironment");
+			Field theCaseInsensitiveEnvironmentField = processEnvironmentClass.getDeclaredField("theCaseInsensitiveEnvironment");
 			theCaseInsensitiveEnvironmentField.setAccessible(true);
 			Map<String, String> cienv = (Map<String, String>) theCaseInsensitiveEnvironmentField.get(null);
 			cienv.putAll(newEnv);
@@ -126,7 +149,7 @@ public class Envio {
 					newEnv.put(conf[0], conf[1]);
 				}
 			}
-			setEnv(newEnv);
+			setEnv(newEnv, false);
 		} catch (Exception e1) {
 			LOGGER.error(e1.getMessage(), e1);
 		} finally {

@@ -6,17 +6,7 @@ import java.beans.PropertyDescriptor;
 import java.io.File;
 import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import org.apache.commons.lang3.StringUtils;
 import org.jdom.Document;
@@ -36,7 +26,7 @@ import freemarker.template.TemplateExceptionHandler;
 
 /**
  * @author <a href="mailto:robert.fiser@socialbakers.com">Robert Fišer</a>
- * 
+ *
  */
 public abstract class AbstractConfiguration {
 
@@ -53,6 +43,8 @@ public abstract class AbstractConfiguration {
 	private static final String HELP_OPTION = OPTION_PREFIX + IParamDefinition.HELP;
 	private static final String DUMP_NAME = NAME_PREFIX + IParamDefinition.DUMP;
 	private static final String DUMP_OPTION = OPTION_PREFIX + IParamDefinition.DUMP;
+
+	private static final Set<String> SKIP_ARGS = new HashSet<String>(Arrays.asList(HELP_NAME, HELP_OPTION, DUMP_NAME, DUMP_OPTION));
 
 	public static String replaceDots(String name) {
 		return name.replaceAll("\\.", "_");
@@ -72,21 +64,22 @@ public abstract class AbstractConfiguration {
 
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 	private List<Object> resources = new ArrayList<Object>();
-	private String[] args = new String[0];
 
+	private String[] args = new String[0];
 	private String helpName = "app-name";
 	private String helpDescription = "";
-	private String envFile;
 
+	private String envFile;
 	private List<IParamDefinition> confDefs;
 	private Map<IParamDefinition, PropertyDescriptor> properties;
 	private Map<String, IParamDefinition> byName = new HashMap<String, IParamDefinition>();
 	private Map<String, IParamDefinition> byEnv = new HashMap<String, IParamDefinition>();
 	private Map<String, IParamDefinition> byOption = new HashMap<String, IParamDefinition>();
 	private Map<Integer, IParamDefinition> byOrder = new HashMap<Integer, IParamDefinition>();
-	private boolean initLoad;
 
+	private boolean initLoad;
 	protected boolean suspendValidation;
+
 	/*
 	 * TODO configurable
 	 */
@@ -105,9 +98,6 @@ public abstract class AbstractConfiguration {
 			return o1.getOrder() - o2.getOrder();
 		}
 	};
-
-	private static final Set<String> SKIP_ARGS = new HashSet<String>(Arrays.asList(HELP_NAME, HELP_OPTION, DUMP_NAME,
-			DUMP_OPTION));
 
 	public AbstractConfiguration(String[] args) {
 		this.args = args;
@@ -218,15 +208,16 @@ public abstract class AbstractConfiguration {
 			PropertyDescriptor descriptor = getDescriptor(confDef);
 			Object previous = descriptor.getReadMethod().invoke(this);
 			if (previous == null || !previous.equals(value)) {
-				logger.info("Setting value '{}' of property '{}' from source {} '{}'", value, confDef.getName(),
-						sourceType, source);
+				logger.info("Setting value '{}' of property '{}' from source {} '{}'", value, confDef.getName(), sourceType, source);
 			}
 
 			boolean hold = suspendValidation;
 			suspendValidation = true;
 			descriptor.getWriteMethod().invoke(this, value);
 			suspendValidation = hold;
-
+			for (String env : confDef.getEnvs()) {
+				Envio.setEnv(env, stringValue);
+			}
 		} catch (Exception e) {
 			throw new ConfigurationException(e);
 		}
@@ -446,8 +437,7 @@ public abstract class AbstractConfiguration {
 				throw new IllegalArgumentException("Invalid argument: " + arg);
 			}
 
-			if (PARAM_VALUE_SEPARATOR.getValuePlace() == ParamValueSeparator.ValuePlace.NEXT_ARG
-					&& (i + 1) >= args.length) {
+			if (PARAM_VALUE_SEPARATOR.getValuePlace() == ParamValueSeparator.ValuePlace.NEXT_ARG && (i + 1) >= args.length) {
 				throw new IllegalArgumentException("Missing value for argument: " + arg);
 			}
 			PropertyDescriptor descriptor = getProperties().get(confDef);
