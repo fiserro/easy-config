@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -81,10 +82,23 @@ public class Envio {
 
 		try {
 			Class<?> processEnvironmentClass = Class.forName("java.lang.ProcessEnvironment");
+			Method variableMethod = Class.forName("java.lang.ProcessEnvironment$Variable").getMethod("valueOf", String.class);
+			variableMethod.setAccessible(true);
+			Method valueMethod = Class.forName("java.lang.ProcessEnvironment$Value").getMethod("valueOf", String.class);
+			valueMethod.setAccessible(true);
+
+			Map<Object, Object> newEnvVarVal = new HashMap<Object, Object>();
+			for (Map.Entry<String, String> entry : newEnv.entrySet()) {
+				Object key = variableMethod.invoke(null, entry.getKey());
+				String valueText = entry.getValue();
+				Object value = valueText != null ? valueMethod.invoke(null, valueText) : null;
+				newEnvVarVal.put(key, value);
+			}
+
 			Field theEnvironmentField = processEnvironmentClass.getDeclaredField("theEnvironment");
 			theEnvironmentField.setAccessible(true);
-			Map<String, String> env = (Map<String, String>) theEnvironmentField.get(null);
-			for (Entry<String, String> entry : newEnv.entrySet()) {
+			Map<Object, Object> env = (Map<Object, Object>) theEnvironmentField.get(null);
+			for (Entry<Object, Object> entry : newEnvVarVal.entrySet()) {
 				if (entry.getValue() == null) {
 					env.remove(entry.getKey());
 				} else {
@@ -93,8 +107,9 @@ public class Envio {
 			}
 			Field theCaseInsensitiveEnvironmentField = processEnvironmentClass.getDeclaredField("theCaseInsensitiveEnvironment");
 			theCaseInsensitiveEnvironmentField.setAccessible(true);
-			Map<String, String> cienv = (Map<String, String>) theCaseInsensitiveEnvironmentField.get(null);
-			cienv.putAll(newEnv);
+			Map<Object, Object> cienv = (Map<Object, Object>) theCaseInsensitiveEnvironmentField.get(null);
+			cienv.putAll(newEnvVarVal);
+
 		} catch (NoSuchFieldException e) {
 			try {
 				Class[] classes = Collections.class.getDeclaredClasses();
